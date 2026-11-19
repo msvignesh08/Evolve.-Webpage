@@ -85,13 +85,24 @@ export function Footer({ onOpenLegal, onOpenCookiePreferences, onDemoClick }: Fo
           </a>
         </div>
 
-        <div className="mt-5 flex flex-col justify-between gap-2 border-t border-white/10 pt-5 sm:flex-row sm:items-center">
-          <p className="max-w-[820px] text-[11px] leading-relaxed text-[#6b7890]">
+        <div className="mt-5 flex flex-col justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row sm:items-end">
+          <p className="max-w-[780px] text-[11px] leading-relaxed text-[#6b7890]">
             FocusOS is an independent personal productivity tool provided &ldquo;AS IS&rdquo; without warranty of any kind, express or implied, and is not intended for safety-critical or emergency use. Android and Google Play are trademarks of Google LLC; Pantone is a registered trademark of Pantone LLC (Pantone-inspired theme shades are approximate digital matches); third-party app names shown in the web preview are illustrative examples with no affiliation. Web typography served via Google Fonts under the SIL Open Font License 1.1; open-source libraries licensed under MIT and ISC licenses.
           </p>
-          <p className="shrink-0 text-[11px] text-[#8d9cb8]">
-            © {year} FocusOS. We never sell your data.
-          </p>
+
+          <div className="shrink-0 sm:text-right">
+            <p className="text-[11px] text-[#8d9cb8]">
+              © {year} FocusOS. We never sell your data.
+            </p>
+            <p className="mt-1.5 flex items-baseline gap-2 text-[11px] text-[#7c89a1] sm:justify-end">
+              <span>Developed by</span>
+              <span className="font-display text-sm font-semibold italic tracking-[-0.02em] bg-gradient-to-r from-[#93c5fd] via-[#f4f7fb] to-[#60a5fa] bg-clip-text text-transparent">
+                Phantomstrange
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className="font-medium tracking-wide text-[#cbd5e8]">M S Vignesh</span>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
