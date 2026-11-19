@@ -11,49 +11,170 @@ import { FeaturesBento } from './components/FeaturesBento';
 import { InteractiveDemoSection } from './components/InteractiveDemoSection';
 import { HowItWorks } from './components/HowItWorks';
 import { ProgressSection } from './components/ProgressSection';
+import { FocusShieldShowcase } from './components/FocusShieldShowcase';
 import { DownloadSection } from './components/DownloadSection';
+import { UpcomingReleaseSection } from './components/UpcomingReleaseSection';
 import { FaqSection } from './components/FaqSection';
 import { Footer } from './components/Footer';
 import { MobileInstallBar } from './components/MobileInstallBar';
 import { FullScreenDemoPage } from './components/FullScreenDemoPage';
+import { AdminGiftPage } from './components/AdminGiftPage';
 import { LegalModal, LegalTab } from './components/LegalModal';
 import { CookieConsent } from './components/CookieConsent';
 import { DemoTab, ThemeId } from './components/focusDemoTypes';
 import {
   CookiePreferences,
-  readCookieConsent,
-  readDemoUiPrefs,
-  writeCookieConsent,
-  writeDemoUiPrefs,
+  hasStoredCookieConsentSync,
+  readCookieConsentAsync,
+  readDemoUiPrefsAsync,
+  writeCookieConsentAsync,
+  writeDemoUiPrefsAsync,
 } from './utils/cookieConsent';
+import {
+  DEFAULT_SITE_THEME,
+  SiteThemeId,
+  getSiteThemeMeta,
+  isValidSiteThemeId,
+} from './utils/siteThemes';
 
 export default function App() {
-  const initialStoredUi = readDemoUiPrefs();
+  // Website Theme ('signature' | 'dark' | 'phantom' | 'emerald')
+  const [siteTheme, setSiteTheme] = useState<SiteThemeId>(DEFAULT_SITE_THEME);
 
   // Shared FocusOS Simulator State (persists seamlessly between inline and 1:1 full-screen page)
   const [activeTab, setActiveTab] = useState<DemoTab>('home');
-  const [themeId, setThemeId] = useState<ThemeId>(initialStoredUi?.themeId ?? 'ios-blue');
-  const [glassEffect, setGlassEffect] = useState<boolean>(initialStoredUi?.glassEffect ?? true);
-  const [vibrantColour, setVibrantColour] = useState<boolean>(
-    initialStoredUi?.vibrantColour ?? true,
-  );
-  const [showQuotes, setShowQuotes] = useState<boolean>(initialStoredUi?.showQuotes ?? true);
-  const [stricterMode, setStricterMode] = useState<boolean>(
-    initialStoredUi?.stricterMode ?? false,
-  );
+  const [themeId, setThemeId] = useState<ThemeId>('ios-blue');
+  const [glassEffect, setGlassEffect] = useState<boolean>(true);
+  const [vibrantColour, setVibrantColour] = useState<boolean>(true);
+  const [showQuotes, setShowQuotes] = useState<boolean>(true);
+  const [stricterMode, setStricterMode] = useState<boolean>(false);
   const [showAllowedAppsScreen, setShowAllowedAppsScreen] = useState(false);
   const [simLegalModal, setSimLegalModal] = useState<'privacy' | 'terms' | null>(null);
   const [blockedPopupTrigger, setBlockedPopupTrigger] = useState(0);
 
-  // Separate full-screen Demo Page, Legal Modal & Cookie Consent state
+  // Separate full-screen Demo Page, Developer Admin Console, Legal Modal & Cookie Consent state
   const [isFullScreenDemo, setIsFullScreenDemo] = useState(false);
-  const [siteLegalTab, setSiteLegalTab] = useState<LegalTab | null>(null);
-  const [cookieConsent, setCookieConsent] = useState<CookiePreferences | null>(() =>
-    readCookieConsent(),
+  const [isAdminView, setIsAdminView] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.location.hash === '#admin',
   );
+  const [siteLegalTab, setSiteLegalTab] = useState<LegalTab | null>(null);
+  const [hasPriorConsent, setHasPriorConsent] = useState<boolean>(() =>
+    hasStoredCookieConsentSync(),
+  );
+  const [cookieConsent, setCookieConsent] = useState<CookiePreferences | null>(null);
   const [cookieModalOpen, setCookieModalOpen] = useState(false);
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
 
-  const showCookieBanner = cookieConsent === null && !isFullScreenDemo;
+  const showCookieBanner =
+    !hasPriorConsent && cookieConsent === null && !isFullScreenDemo && !isAdminView;
+
+  // Hydrate encrypted local preferences on mount
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [consent, storedUi] = await Promise.all([
+        readCookieConsentAsync(),
+        readDemoUiPrefsAsync(),
+      ]);
+      if (!active) return;
+      if (consent) {
+        setCookieConsent(consent);
+        setHasPriorConsent(true);
+      } else {
+        setHasPriorConsent(false);
+      }
+      if (storedUi) {
+        if (isValidSiteThemeId(storedUi.siteTheme)) setSiteTheme(storedUi.siteTheme);
+        if (storedUi.themeId) setThemeId(storedUi.themeId);
+        if (typeof storedUi.glassEffect === 'boolean') setGlassEffect(storedUi.glassEffect);
+        if (typeof storedUi.vibrantColour === 'boolean') setVibrantColour(storedUi.vibrantColour);
+        if (typeof storedUi.showQuotes === 'boolean') setShowQuotes(storedUi.showQuotes);
+        if (typeof storedUi.stricterMode === 'boolean') setStricterMode(storedUi.stricterMode);
+      }
+      setPrefsHydrated(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Apply selected site theme to <html> & mobile browser address bar theme-color
+  useEffect(() => {
+    document.documentElement.dataset.siteTheme = siteTheme;
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta) {
+      meta.content = getSiteThemeMeta(siteTheme).themeColor;
+    }
+  }, [siteTheme]);
+
+  // Client-side anti-copy & casual source-inspection deterrents
+  useEffect(() => {
+    const isSelectableTarget = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      Boolean(target.closest('.allow-select, input, textarea, select'));
+
+    const onContextMenu = (e: MouseEvent) => {
+      if (!isSelectableTarget(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    const onCopyOrCut = (e: ClipboardEvent) => {
+      if (!isSelectableTarget(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    const onDragStart = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return;
+      }
+
+      if (ctrlOrCmd && e.shiftKey && (key === 'i' || key === 'j' || key === 'c' || key === 'k')) {
+        e.preventDefault();
+        return;
+      }
+
+      if (e.metaKey && e.altKey && (key === 'i' || key === 'j' || key === 'c' || key === 'u')) {
+        e.preventDefault();
+        return;
+      }
+
+      if (ctrlOrCmd && (key === 'u' || key === 's')) {
+        e.preventDefault();
+        return;
+      }
+
+      if (ctrlOrCmd && key === 'c' && !isSelectableTarget(e.target)) {
+        const selection = window.getSelection()?.toString() || '';
+        if (!selection || !isSelectableTarget(window.getSelection()?.anchorNode?.parentElement ?? null)) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('contextmenu', onContextMenu, true);
+    document.addEventListener('copy', onCopyOrCut, true);
+    document.addEventListener('cut', onCopyOrCut, true);
+    document.addEventListener('dragstart', onDragStart, true);
+    window.addEventListener('keydown', onKeyDown, true);
+
+    return () => {
+      document.removeEventListener('contextmenu', onContextMenu, true);
+      document.removeEventListener('copy', onCopyOrCut, true);
+      document.removeEventListener('cut', onCopyOrCut, true);
+      document.removeEventListener('dragstart', onDragStart, true);
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, []);
 
   // Dynamic canonical & OpenGraph URL resolution
   useEffect(() => {
@@ -75,24 +196,36 @@ export default function App() {
     ogUrlMeta.content = canonicalUrl;
   }, []);
 
-  // Persist optional demo UI preferences only when permitted
+  // Persist optional site & demo UI preferences only when permitted (encrypted via AES-GCM)
   useEffect(() => {
-    if (!cookieConsent?.uiPreferences) return;
-    writeDemoUiPrefs({
+    if (!prefsHydrated || !cookieConsent?.uiPreferences) return;
+    void writeDemoUiPrefsAsync({
+      siteTheme,
       themeId,
       glassEffect,
       vibrantColour,
       showQuotes,
       stricterMode,
     });
-  }, [cookieConsent?.uiPreferences, themeId, glassEffect, vibrantColour, showQuotes, stricterMode]);
+  }, [
+    prefsHydrated,
+    cookieConsent?.uiPreferences,
+    siteTheme,
+    themeId,
+    glassEffect,
+    vibrantColour,
+    showQuotes,
+    stricterMode,
+  ]);
 
-  const handleSaveCookiePrefs = (uiPreferences: boolean) => {
-    const updated = writeCookieConsent(uiPreferences);
+  const handleSaveCookiePrefs = async (uiPreferences: boolean) => {
+    const updated = await writeCookieConsentAsync(uiPreferences);
     setCookieConsent(updated);
+    setHasPriorConsent(true);
     setCookieModalOpen(false);
     if (uiPreferences) {
-      writeDemoUiPrefs({
+      await writeDemoUiPrefsAsync({
+        siteTheme,
         themeId,
         glassEffect,
         vibrantColour,
@@ -126,18 +259,38 @@ export default function App() {
     }, 60);
   };
 
-  // Sync with Android hardware/gesture Back button & initial #demo-app hash
-  useEffect(() => {
-    if (window.location.hash === '#demo-app') {
-      setIsFullScreenDemo(true);
+  const openAdminView = () => {
+    setIsFullScreenDemo(false);
+    setIsAdminView(true);
+    if (window.location.hash !== '#admin') {
+      window.history.pushState({ adminView: true }, '', '#admin');
     }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
 
-    const onPopState = () => {
-      setIsFullScreenDemo(window.location.hash === '#demo-app');
+  const closeAdminView = () => {
+    setIsAdminView(false);
+    if (window.location.hash === '#admin') {
+      window.history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  // Sync with Android hardware/gesture Back button & initial #demo-app / #admin hash
+  useEffect(() => {
+    const syncFromHash = () => {
+      const h = window.location.hash;
+      setIsFullScreenDemo(h === '#demo-app');
+      setIsAdminView(h === '#admin');
     };
 
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    syncFromHash();
+    window.addEventListener('popstate', syncFromHash);
+    window.addEventListener('hashchange', syncFromHash);
+    return () => {
+      window.removeEventListener('popstate', syncFromHash);
+      window.removeEventListener('hashchange', syncFromHash);
+    };
   }, []);
 
   // Lock background page scroll while modal or separate full-screen demo is open
@@ -172,17 +325,33 @@ export default function App() {
     blockedPopupTrigger,
   };
 
+  if (isAdminView) {
+    return (
+      <MotionConfig reducedMotion="user">
+        <AdminGiftPage
+          onBack={closeAdminView}
+          siteTheme={siteTheme}
+          onChangeSiteTheme={setSiteTheme}
+        />
+      </MotionConfig>
+    );
+  }
+
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-[#070a10] text-[#f4f7fb]">
+      <div className="site-bg site-theme-scope min-h-screen text-[#f4f7fb]">
         <a
           href="#top"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-[#3b82f6] focus:px-4 focus:py-2 focus:text-xs focus:font-semibold focus:text-white focus:outline-none"
+          className="site-primary-btn sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:px-4 focus:py-2 focus:text-xs focus:font-semibold focus:outline-none"
         >
           Skip to main content
         </a>
 
-        <Navbar onDemoClick={openFullScreenDemo} />
+        <Navbar
+          onDemoClick={openFullScreenDemo}
+          siteTheme={siteTheme}
+          onChangeSiteTheme={setSiteTheme}
+        />
         <main id="top">
           <Hero onOpenDemo={openFullScreenDemo} />
           <FeaturesBento />
@@ -193,13 +362,18 @@ export default function App() {
           />
           <HowItWorks />
           <ProgressSection />
+          <FocusShieldShowcase />
           <DownloadSection />
+          <UpcomingReleaseSection />
           <FaqSection />
         </main>
         <Footer
           onOpenLegal={(tab) => setSiteLegalTab(tab)}
           onOpenCookiePreferences={() => setCookieModalOpen(true)}
           onDemoClick={openFullScreenDemo}
+          onOpenAdmin={openAdminView}
+          siteTheme={siteTheme}
+          onChangeSiteTheme={setSiteTheme}
         />
 
         {!isFullScreenDemo && !showCookieBanner && !cookieModalOpen && <MobileInstallBar />}

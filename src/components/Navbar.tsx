@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { AnimatePresence, motion, useScroll, useSpring } from 'motion/react';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { FocusLogo } from './FocusLogo';
+import { SiteThemeSwitcher } from './SiteThemeSwitcher';
+import { SiteThemeId } from '../utils/siteThemes';
 
 const NAV_LINKS = [
   { href: '#features', label: 'Features' },
@@ -13,9 +15,11 @@ const NAV_LINKS = [
 
 interface NavbarProps {
   onDemoClick: () => void;
+  siteTheme: SiteThemeId;
+  onChangeSiteTheme: (theme: SiteThemeId) => void;
 }
 
-export function Navbar({ onDemoClick }: NavbarProps) {
+export function Navbar({ onDemoClick, siteTheme, onChangeSiteTheme }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -33,15 +37,15 @@ export function Navbar({ onDemoClick }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#070a10]/85 backdrop-blur-xl">
+    <header className="site-nav-shell sticky top-0 z-40 border-b border-white/12 pt-[env(safe-area-inset-top)] shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_-1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-colors duration-200">
       {/* Hairline scroll progress bar */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left bg-gradient-to-r from-[#60a5fa] via-[#3b82f6] to-[#34d399]"
+        className="site-progress-line pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left"
         style={{ scaleX }}
       />
 
-      <div className="mx-auto flex h-14 max-w-[1160px] items-center justify-between gap-8 px-4 sm:h-[72px] sm:px-6">
+      <div className="mx-auto flex h-14 max-w-[1160px] items-center justify-between gap-4 px-4 sm:h-[72px] sm:gap-8 sm:px-6">
         {/* Zone 1: Single-line Brand Wordmark */}
         <a
           href="#top"
@@ -64,17 +68,23 @@ export function Navbar({ onDemoClick }: NavbarProps) {
               {link.label}
               <span
                 aria-hidden="true"
-                className="absolute inset-x-0 -bottom-0.5 h-[1.5px] origin-left scale-x-0 bg-[#3b82f6] transition-transform duration-200 ease-out group-hover:scale-x-100"
+                className="absolute inset-x-0 -bottom-0.5 h-[1.5px] origin-left scale-x-0 bg-gradient-to-r from-[#60a5fa] to-[#34d399] transition-transform duration-200 ease-out group-hover:scale-x-100"
               />
             </a>
           ))}
         </nav>
 
-        {/* Zone 3: 1 primary action + mobile menu toggle */}
-        <div className="flex shrink-0 items-center gap-2.5">
+        {/* Zone 3: Theme switcher + primary action + mobile menu toggle */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+          <SiteThemeSwitcher
+            siteTheme={siteTheme}
+            onChangeSiteTheme={onChangeSiteTheme}
+            variant="navbar"
+          />
+
           <a
             href="#download"
-            className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-[#3b82f6] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-[#2563eb] hover:shadow-[0_10px_28px_rgba(59,130,246,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] md:inline-flex"
+            className="site-primary-btn hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 md:inline-flex"
           >
             <span>Get FocusOS</span>
             <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -85,7 +95,7 @@ export function Navbar({ onDemoClick }: NavbarProps) {
             onClick={() => setMobileOpen((prev) => !prev)}
             aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileOpen}
-            className="grid h-11 w-11 place-items-center rounded-xl border border-white/15 bg-white/[0.03] text-[#f4f7fb] transition-transform duration-150 active:scale-95 hover:border-[#3b82f6]/50 touch-manipulation md:hidden"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-white/15 bg-white/[0.06] text-[#f4f7fb] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-md transition-transform duration-150 active:scale-95 hover:border-white/35 touch-manipulation md:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -101,7 +111,7 @@ export function Navbar({ onDemoClick }: NavbarProps) {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             aria-label="Mobile navigation"
-            className="border-t border-white/10 bg-[#0b101b]/95 px-4 py-4 backdrop-blur-xl md:hidden"
+            className="site-drawer-shell border-t border-white/10 px-4 py-4 backdrop-blur-xl md:hidden"
           >
             <div className="flex flex-col gap-1">
               {NAV_LINKS.map((link) => (
@@ -120,7 +130,7 @@ export function Navbar({ onDemoClick }: NavbarProps) {
               <a
                 href="#download"
                 onClick={() => setMobileOpen(false)}
-                className="mt-2 flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#3b82f6] px-5 py-3 text-sm font-semibold text-white transition-transform active:scale-[0.98] touch-manipulation"
+                className="site-primary-btn mt-2 flex min-h-[48px] items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-transform active:scale-[0.98] touch-manipulation"
               >
                 <span>Download for Android</span>
                 <ArrowUpRight className="h-4 w-4" aria-hidden="true" />

@@ -56,7 +56,7 @@ export function ProgressSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-[28px] border border-white/10 bg-gradient-to-br from-[#3b82f6]/12 to-white/[0.025] p-5 sm:p-7"
+          className="glass-surface-highlight rounded-[28px] p-5 sm:p-7"
         >
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -71,7 +71,7 @@ export function ProgressSection() {
             <div
               role="group"
               aria-label="Preview weekly routine"
-              className="flex items-center gap-1 rounded-xl border border-white/10 bg-black/25 p-1"
+              className="glass-well flex items-center gap-1 rounded-xl p-1"
             >
               {WEEKLY_PRESETS.map((preset, idx) => {
                 const active = presetIdx === idx;
@@ -80,9 +80,9 @@ export function ProgressSection() {
                     key={preset.id}
                     type="button"
                     onClick={() => setPresetIdx(idx)}
-                    className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150 touch-manipulation ${
+                    className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 touch-manipulation ${
                       active
-                        ? 'bg-[#3b82f6] text-white'
+                        ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_14px_rgba(59,130,246,0.35)]'
                         : 'text-[#9ba8bf] hover:text-[#f4f7fb]'
                     }`}
                   >
@@ -117,10 +117,10 @@ export function ProgressSection() {
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     style={{ height: '100%', transformOrigin: 'bottom' }}
-                    className={`w-full rounded-t-lg rounded-b-[3px] transition-opacity duration-150 ${
+                    className={`w-full rounded-t-lg rounded-b-[3px] transition-all duration-150 ${
                       selected
-                        ? 'bg-[#60a5fa] opacity-100'
-                        : 'bg-gradient-to-b from-[#60a5fa] to-[#2563eb] opacity-65 hover:opacity-90'
+                        ? 'bg-gradient-to-b from-[#93c5fd] via-[#60a5fa] to-[#3b82f6] opacity-100 shadow-[0_0_20px_rgba(96,165,250,0.45)]'
+                        : 'bg-gradient-to-b from-[#60a5fa] to-[#2563eb] opacity-60 hover:opacity-88'
                     }`}
                   />
                 </button>
@@ -135,7 +135,7 @@ export function ProgressSection() {
                 type="button"
                 onClick={() => setSelectedDayIdx(idx)}
                 className={`min-h-[32px] px-1 transition-colors touch-manipulation ${
-                  selectedDayIdx === idx ? 'font-bold text-[#60a5fa]' : 'hover:text-[#dce5f5]'
+                  selectedDayIdx === idx ? 'font-bold text-[#93c5fd]' : 'hover:text-[#dce5f5]'
                 }`}
               >
                 {day}
@@ -144,7 +144,7 @@ export function ProgressSection() {
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-2.5">
-            <div className="rounded-xl border border-white/5 bg-black/20 p-3 sm:p-3.5">
+            <div className="glass-well rounded-xl p-3 sm:p-3.5">
               <b className="block font-display text-lg font-bold text-[#f4f7fb] tabular-nums sm:text-xl">
                 {current.focusTime}
               </b>
@@ -152,7 +152,7 @@ export function ProgressSection() {
                 Focus time
               </small>
             </div>
-            <div className="rounded-xl border border-white/5 bg-black/20 p-3 sm:p-3.5">
+            <div className="glass-well rounded-xl p-3 sm:p-3.5">
               <b className="block font-display text-lg font-bold text-[#f4f7fb] tabular-nums sm:text-xl">
                 {current.sessions}
               </b>
@@ -160,7 +160,7 @@ export function ProgressSection() {
                 Sessions
               </small>
             </div>
-            <div className="rounded-xl border border-white/5 bg-black/20 p-3 sm:p-3.5">
+            <div className="glass-well rounded-xl p-3 sm:p-3.5">
               <b className="block font-display text-lg font-bold text-[#f4f7fb] tabular-nums sm:text-xl">
                 {current.streak}
               </b>
@@ -208,7 +208,7 @@ export function ProgressSection() {
 
           <a
             href="#download"
-            className="mt-6 inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-white/[0.05] px-6 py-3 text-sm font-semibold text-[#f4f7fb] transition-colors duration-150 active:scale-[0.98] hover:border-[#3b82f6]/50 hover:bg-white/[0.09] touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] sm:mt-7 sm:w-auto"
+            className="glass-surface mt-6 inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-sm font-semibold text-[#f4f7fb] transition-all duration-150 active:scale-[0.98] hover:border-[#60a5fa]/55 hover:brightness-110 touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] sm:mt-7 sm:w-auto"
           >
             <span>Download FocusOS</span>
             <ArrowUpRight className="h-4 w-4 text-[#60a5fa]" aria-hidden="true" />

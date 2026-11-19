@@ -92,11 +92,11 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7 lg:col-span-2"
+            className="glass-surface-highlight flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/50 sm:p-7 lg:col-span-2"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="max-w-[360px]">
-                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#60a5fa]/30 bg-[#3b82f6]/18 text-[#93c5fd] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] sm:mb-5">
                   <Clock3 className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -107,7 +107,7 @@ export function FeaturesBento() {
                 </p>
               </div>
 
-              <div className="w-full rounded-2xl border border-white/10 bg-[#0b101b]/90 p-3.5 sm:w-[270px] sm:shrink-0 sm:p-4">
+              <div className="glass-well w-full rounded-2xl p-3.5 sm:w-[270px] sm:shrink-0 sm:p-4">
                 <p className="mb-2.5 text-xs font-medium text-[#8d9cb8]">
                   Select session focus
                 </p>
@@ -119,10 +119,10 @@ export function FeaturesBento() {
                         key={topic.label}
                         type="button"
                         onClick={() => setSelectedTopic(idx)}
-                        className={`flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2 text-left text-xs font-medium transition-colors duration-150 active:scale-[0.98] touch-manipulation ${
+                        className={`flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2 text-left text-xs font-medium transition-all duration-150 active:scale-[0.98] touch-manipulation ${
                           active
-                            ? 'bg-[#3b82f6] text-white'
-                            : 'bg-white/[0.04] text-[#cbd5e8] hover:bg-white/[0.08]'
+                            ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white shadow-[0_6px_18px_rgba(59,130,246,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]'
+                            : 'bg-white/[0.04] text-[#cbd5e8] hover:bg-white/[0.09]'
                         }`}
                       >
                         <span className="truncate">{topic.label}</span>
@@ -148,10 +148,10 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7"
+            className="glass-surface flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/45 sm:p-7"
           >
             <div>
-              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#60a5fa]/25 bg-[#3b82f6]/15 text-[#93c5fd] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] sm:mb-5">
                 <Lock className="h-5 w-5" aria-hidden="true" />
               </div>
               <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -175,10 +175,10 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7"
+            className="glass-surface flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/45 sm:p-7"
           >
             <div>
-              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#60a5fa]/25 bg-[#3b82f6]/15 text-[#93c5fd] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] sm:mb-5">
                 <CalendarClock className="h-5 w-5" aria-hidden="true" />
               </div>
               <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -202,11 +202,11 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7 lg:col-span-2"
+            className="glass-surface-highlight flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/50 sm:p-7 lg:col-span-2"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="max-w-[340px]">
-                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#60a5fa]/30 bg-[#3b82f6]/18 text-[#93c5fd] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] sm:mb-5">
                   <ShieldBan className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -220,7 +220,7 @@ export function FeaturesBento() {
                 </p>
               </div>
 
-              <div className="w-full rounded-2xl border border-white/10 bg-[#0b101b]/90 p-3.5 sm:w-[290px] sm:shrink-0 sm:p-4">
+              <div className="glass-well w-full rounded-2xl p-3.5 sm:w-[290px] sm:shrink-0 sm:p-4">
                 <p className="mb-2.5 text-xs font-medium text-[#8d9cb8]">
                   Tap an app to test allowlist
                 </p>
@@ -230,7 +230,7 @@ export function FeaturesBento() {
                       key={app.name}
                       type="button"
                       onClick={() => toggleApp(idx)}
-                      className="flex min-h-[44px] items-center justify-between rounded-xl bg-white/[0.04] px-3.5 py-2 text-left text-xs transition-colors duration-150 active:scale-[0.98] hover:bg-white/[0.08] touch-manipulation"
+                      className="flex min-h-[44px] items-center justify-between rounded-xl border border-white/5 bg-white/[0.04] px-3.5 py-2 text-left text-xs transition-colors duration-150 active:scale-[0.98] hover:border-white/15 hover:bg-white/[0.08] touch-manipulation"
                     >
                       <span className="font-medium text-[#e4ebf7]">{app.name}</span>
                       <span
@@ -254,10 +254,10 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7"
+            className="glass-surface flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/45 sm:p-7"
           >
             <div>
-              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#34d399]/25 bg-[#34d399]/15 text-[#6ee7b7] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] sm:mb-5">
                 <TrendingUp className="h-5 w-5" aria-hidden="true" />
               </div>
               <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -281,11 +281,11 @@ export function FeaturesBento() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
             variants={cardVariants}
-            className="flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.015] p-5 transition-colors duration-200 hover:border-[#3b82f6]/40 sm:p-7 lg:col-span-2"
+            className="glass-surface flex flex-col justify-between rounded-3xl p-5 transition-colors duration-200 hover:border-[#60a5fa]/45 sm:p-7 lg:col-span-2"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div className="max-w-[360px]">
-                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa] sm:mb-5">
+                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-[#60a5fa]/25 bg-[#3b82f6]/15 text-[#93c5fd] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] sm:mb-5">
                   <Users className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <h3 className="font-display text-xl font-semibold tracking-tight text-[#f4f7fb]">
@@ -296,7 +296,7 @@ export function FeaturesBento() {
                 </p>
               </div>
 
-              <div className="w-full rounded-2xl border border-white/10 bg-[#0b101b]/90 p-3.5 sm:w-[270px] sm:shrink-0 sm:p-4">
+              <div className="glass-well w-full rounded-2xl p-3.5 sm:w-[270px] sm:shrink-0 sm:p-4">
                 <p className="text-xs font-medium text-[#8d9cb8]">Shared study room</p>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <span className="font-mono text-lg font-semibold tracking-wider text-[#f4f7fb] tabular-nums">
@@ -305,7 +305,7 @@ export function FeaturesBento() {
                   <button
                     type="button"
                     onClick={handleCopyCode}
-                    className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.05] px-3.5 py-2 text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-95 hover:border-[#3b82f6]/50 hover:text-[#60a5fa] touch-manipulation"
+                    className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold text-[#f4f7fb] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-colors active:scale-95 hover:border-[#60a5fa]/50 hover:text-[#93c5fd] touch-manipulation"
                   >
                     {copiedCode ? (
                       <>

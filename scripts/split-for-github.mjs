@@ -22,6 +22,7 @@ const GITHUB_WEB_LIMIT_BYTES = 24 * 1024 * 1024;
 
 function parseArgs(argv) {
   let checkOnly = false;
+  let hashOnly = false;
   let sizeMb = DEFAULT_MB;
   let inputFile = null;
   let outputDir = path.resolve(process.cwd(), 'public');
@@ -29,6 +30,8 @@ function parseArgs(argv) {
   for (const arg of argv) {
     if (arg === '--check') {
       checkOnly = true;
+    } else if (arg === '--hash') {
+      hashOnly = true;
     } else if (arg.startsWith('--size-mb=')) {
       const val = Number(arg.split('=')[1]);
       if (!Number.isFinite(val) || val < MIN_MB || val > MAX_MB) {
@@ -43,7 +46,7 @@ function parseArgs(argv) {
     }
   }
 
-  return { checkOnly, sizeMb, inputFile, outputDir };
+  return { checkOnly, hashOnly, sizeMb, inputFile, outputDir };
 }
 
 function walkRepoFiles(dir, results = []) {
@@ -152,15 +155,34 @@ async function splitFileIntoParts(inputPath, sizeMb, outputDir) {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
   console.log(`\nSplit complete: ${partNames.length} parts (${sizeMb} MB max each).`);
+  console.log(`SHA-256:  ${manifest.sha256}`);
   console.log(`Manifest: ${path.relative(process.cwd(), manifestPath)}`);
   console.log(
     `Remove or move the unsplit original (> 24 MB) before uploading to GitHub. Render/server.ts will stream ${baseName} automatically from these parts.`,
   );
 }
 
-const { checkOnly, sizeMb, inputFile, outputDir } = parseArgs(process.argv.slice(2));
+async function printSha256(inputPath) {
+  if (!fs.existsSync(inputPath) || !fs.statSync(inputPath).isFile()) {
+    console.error(`Error: File not found: ${inputPath}`);
+    process.exit(1);
+  }
+  const hash = crypto.createHash('sha256');
+  const stream = fs.createReadStream(inputPath);
+  for await (const chunk of stream) {
+    hash.update(chunk);
+  }
+  const digest = hash.digest('hex');
+  const sizeMb = (fs.statSync(inputPath).size / (1024 * 1024)).toFixed(2);
+  console.log(`File:    ${path.basename(inputPath)} (${sizeMb} MB)`);
+  console.log(`SHA-256: ${digest}`);
+}
 
-if (checkOnly || !inputFile) {
+const { checkOnly, hashOnly, sizeMb, inputFile, outputDir } = parseArgs(process.argv.slice(2));
+
+if (hashOnly && inputFile) {
+  await printSha256(inputFile);
+} else if (checkOnly || !inputFile) {
   runSizeAudit();
 } else {
   await splitFileIntoParts(inputFile, sizeMb, outputDir);

@@ -50,7 +50,7 @@ export function HowItWorks() {
             No complicated productivity system. Just decide what matters right now, make distractions less available, and begin.
           </p>
 
-          <div className="mt-6 rounded-2xl border border-[#3b82f6]/25 bg-[#3b82f6]/[0.07] px-4 py-3.5 text-xs leading-relaxed text-[#cbd8f0] sm:mt-7 sm:px-5 sm:py-4">
+          <div className="glass-surface-highlight mt-6 rounded-2xl px-4 py-3.5 text-xs leading-relaxed text-[#cbd8f0] sm:mt-7 sm:px-5 sm:py-4">
             <strong className="block font-semibold text-[#f4f7fb]">
               We never sell your data. Not now, not ever.
             </strong>
@@ -65,7 +65,7 @@ export function HowItWorks() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-[28px] border border-white/10 bg-gradient-to-br from-[#121a2b] to-[#0b101b] p-5 sm:p-7"
+          className="glass-surface rounded-[28px] p-5 sm:p-7"
         >
           <div className="divide-y divide-white/10">
             {STEPS.map((step, idx) => {
@@ -78,10 +78,10 @@ export function HowItWorks() {
                   className="group flex min-h-[56px] w-full items-start gap-4 py-4 text-left transition-colors first:pt-1 last:pb-1 touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
                 >
                   <span
-                    className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold transition-colors duration-200 ${
+                    className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold transition-all duration-200 ${
                       isActive
-                        ? 'bg-[#3b82f6] text-white'
-                        : 'border border-white/15 bg-white/[0.04] text-[#a9b6cc] group-hover:border-[#3b82f6]/50'
+                        ? 'bg-gradient-to-br from-[#60a5fa] to-[#2563eb] text-white shadow-[0_6px_18px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.3)]'
+                        : 'border border-white/15 bg-white/[0.04] text-[#a9b6cc] group-hover:border-[#60a5fa]/50'
                     }`}
                   >
                     {step.number}

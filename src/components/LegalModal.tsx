@@ -99,7 +99,7 @@ export function LegalModal({
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[88dvh] w-full max-w-[740px] flex-col overflow-hidden rounded-t-3xl border border-white/15 bg-[#0e1420] text-[#f4f7fb] shadow-2xl sm:rounded-3xl"
+            className="site-modal-bg flex max-h-[88dvh] w-full max-w-[740px] flex-col overflow-hidden rounded-t-3xl border border-white/15 text-[#f4f7fb] shadow-2xl sm:rounded-3xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
@@ -125,7 +125,7 @@ export function LegalModal({
             <div
               role="tablist"
               aria-label="Legal sections"
-              className="grid grid-cols-2 gap-1.5 border-b border-white/10 bg-[#0a0e17] px-5 py-2.5 sm:grid-cols-4 sm:px-6"
+              className="grid grid-cols-2 gap-1.5 border-b border-white/10 bg-black/25 px-5 py-2.5 sm:grid-cols-4 sm:px-6"
             >
               {(
                 [

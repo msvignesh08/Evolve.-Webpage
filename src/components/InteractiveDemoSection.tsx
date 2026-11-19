@@ -48,7 +48,7 @@ export function InteractiveDemoSection({
   };
 
   return (
-    <section id="demo" className="border-y border-white/10 bg-[#090d16]/70 py-14 sm:py-24">
+    <section id="demo" className="site-demo-section border-y border-white/10 py-14 backdrop-blur-sm sm:py-24">
       <div className="mx-auto max-w-[1160px] px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -75,17 +75,17 @@ export function InteractiveDemoSection({
           <button
             type="button"
             onClick={onOpenFullScreen}
-            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-[#3b82f6] px-6 py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:bg-[#2563eb] hover:shadow-[0_12px_30px_rgba(59,130,246,0.3)] touch-manipulation"
+            className="site-primary-btn inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-110 touch-manipulation"
           >
             <Maximize2 className="h-4 w-4" aria-hidden="true" />
             <span>Open 1:1 full-screen demo</span>
           </button>
         </motion.div>
 
-        {/* Mobile Quick Launch Banner for Android */}
-        <div className="mb-6 rounded-3xl border border-[#3b82f6]/30 bg-gradient-to-br from-[#3b82f6]/15 to-white/[0.02] p-5 md:hidden">
+        {/* Mobile Quick Launch Banner for Android & iPhone */}
+        <div className="glass-surface-highlight mb-6 rounded-3xl p-5 md:hidden">
           <div className="flex items-start gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#3b82f6] text-white">
+            <span className="site-primary-btn grid h-10 w-10 shrink-0 place-items-center rounded-xl">
               <Smartphone className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
@@ -93,14 +93,14 @@ export function InteractiveDemoSection({
                 Experience FocusOS 1:1 on your phone
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-[#9ba8bf]">
-                Launch the demo as a full-screen Android app page with zero website borders.
+                Launch the demo as a full-screen edge-to-edge app page with zero website borders.
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onOpenFullScreen}
-            className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#3b82f6] px-5 text-sm font-semibold text-white transition-transform active:scale-[0.98] touch-manipulation"
+            className="site-primary-btn mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-transform active:scale-[0.98] touch-manipulation"
           >
             <Maximize2 className="h-4 w-4" aria-hidden="true" />
             <span>Launch full-screen app demo</span>
@@ -108,9 +108,9 @@ export function InteractiveDemoSection({
         </div>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-          {/* Desktop / Tablet Framed Phone Simulator (and scrollable inline preview on mobile) */}
+          {/* Desktop / Tablet Framed Phone Simulator */}
           <div className="hidden flex-col items-center md:flex">
-            <div className="relative w-full max-w-[356px] rounded-[42px] border border-white/20 bg-gradient-to-br from-[#232a38] via-[#10141d] to-[#080a10] p-3 shadow-[0_32px_90px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.16)]">
+            <div className="focus-app-sim-root relative w-full max-w-[356px] rounded-[42px] border border-white/25 bg-gradient-to-br from-[#263044]/95 via-[#101522]/95 to-[#080a10]/95 p-3 shadow-[0_32px_90px_rgba(0,0,0,0.68),0_0_40px_-14px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.22)]">
               <FocusAppSimulator {...simProps} />
             </div>
             <p className="mt-3 text-center text-[11px] text-[#7c89a1]">
@@ -120,7 +120,7 @@ export function InteractiveDemoSection({
 
           {/* Live Theme & UI/UX Controls */}
           <div className="flex flex-col gap-5">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <div className="glass-surface rounded-3xl p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-display text-lg font-semibold text-[#f4f7fb]">
@@ -220,7 +220,7 @@ export function InteractiveDemoSection({
             </div>
 
             {/* Interactive Scenario Shortcuts */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <div className="glass-surface rounded-3xl p-5 sm:p-6">
               <h3 className="font-display text-base font-semibold text-[#f4f7fb]">
                 Quick scenarios to test
               </h3>
@@ -232,7 +232,7 @@ export function InteractiveDemoSection({
                 <button
                   type="button"
                   onClick={handleOpenBlockedPopup}
-                  className="flex min-h-[48px] items-center justify-between rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
+                  className="glass-well flex min-h-[48px] items-center justify-between rounded-2xl px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
                 >
                   <span className="flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-amber-400" aria-hidden="true" />
@@ -250,7 +250,7 @@ export function InteractiveDemoSection({
                       onOpenFullScreen();
                     }
                   }}
-                  className="flex min-h-[48px] items-center justify-between rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
+                  className="glass-well flex min-h-[48px] items-center justify-between rounded-2xl px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
                 >
                   <span className="flex items-center gap-2">
                     <Lock className="h-4 w-4 text-[#60a5fa]" aria-hidden="true" />
@@ -268,7 +268,7 @@ export function InteractiveDemoSection({
                       onOpenFullScreen();
                     }
                   }}
-                  className="flex min-h-[48px] items-center justify-between rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
+                  className="glass-well flex min-h-[48px] items-center justify-between rounded-2xl px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
                 >
                   <span className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-[#34d399]" aria-hidden="true" />
@@ -287,7 +287,7 @@ export function InteractiveDemoSection({
                       onOpenFullScreen();
                     }
                   }}
-                  className="flex min-h-[48px] items-center justify-between rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
+                  className="glass-well flex min-h-[48px] items-center justify-between rounded-2xl px-4 py-2.5 text-left text-xs font-semibold text-[#f4f7fb] transition-colors active:scale-[0.98] hover:border-white/25 touch-manipulation"
                 >
                   <span className="flex items-center gap-2">
                     <Clock3 className="h-4 w-4 text-[#60a5fa]" aria-hidden="true" />
@@ -299,7 +299,7 @@ export function InteractiveDemoSection({
             </div>
 
             {/* Privacy Motto Callout */}
-            <div className="rounded-3xl border border-[#3b82f6]/25 bg-[#3b82f6]/[0.07] p-5 sm:p-6">
+            <div className="glass-surface-highlight rounded-3xl p-5 sm:p-6">
               <p className="text-xs font-semibold tracking-widest text-[#60a5fa] uppercase">
                 Our core motto
               </p>

@@ -53,7 +53,7 @@ export function CookieConsent({
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             aria-label="Cookie and local storage notice"
-            className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-white/15 bg-[#0d1320]/95 p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[410px] sm:p-4"
+            className="glass-surface-highlight fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-2xl p-3.5 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[410px] sm:p-4"
           >
             <div className="flex items-start gap-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa]">
@@ -95,7 +95,7 @@ export function CookieConsent({
               <button
                 type="button"
                 onClick={onAcceptOptional}
-                className="min-h-[38px] whitespace-nowrap rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#2563eb] touch-manipulation"
+                className="site-primary-btn min-h-[38px] whitespace-nowrap rounded-full px-4 text-xs font-semibold transition-all hover:brightness-110 touch-manipulation"
               >
                 Save preferences
               </button>
@@ -124,7 +124,7 @@ export function CookieConsent({
               exit={{ opacity: 0, y: 18 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="flex max-h-[88dvh] w-full max-w-[540px] flex-col overflow-hidden rounded-t-3xl border border-white/15 bg-[#0e1420] text-[#f4f7fb] shadow-2xl sm:rounded-3xl"
+              className="site-modal-bg flex max-h-[88dvh] w-full max-w-[540px] flex-col overflow-hidden rounded-t-3xl border border-white/15 text-[#f4f7fb] shadow-2xl sm:rounded-3xl"
             >
               <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
                 <div>

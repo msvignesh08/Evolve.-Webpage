@@ -9,6 +9,7 @@
     "start": "node server.ts",
     "preview": "vite preview",
     "split:apk": "node scripts/split-for-github.mjs",
+    "sha256": "node scripts/split-for-github.mjs --hash",
     "check:sizes": "node scripts/split-for-github.mjs --check",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"

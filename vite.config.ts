@@ -1,8 +1,48 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import crypto from 'node:crypto';
 import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
+
+function injectSubresourceIntegrity(distDir: string) {
+  const indexPath = path.join(distDir, 'index.html');
+  if (!fs.existsSync(indexPath)) return;
+
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  const computeIntegrity = (assetHref: string): string | null => {
+    const rel = assetHref.replace(/^\/+/, '');
+    const filePath = path.join(distDir, rel);
+    if (!filePath.startsWith(distDir) || !fs.existsSync(filePath)) return null;
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('base64');
+    return `sha256-${hash}`;
+  };
+
+  html = html.replace(
+    /<script([^>]*?)\ssrc="(\/assets\/[^"]+)"([^>]*)><\/script>/gi,
+    (match, pre: string, src: string, post: string) => {
+      if (/\bintegrity=/i.test(match)) return match;
+      const integrity = computeIntegrity(src);
+      if (!integrity) return match;
+      const hasCors = /\bcrossorigin\b/i.test(match);
+      return `<script${pre} src="${src}" integrity="${integrity}"${hasCors ? '' : ' crossorigin="anonymous"'}${post}></script>`;
+    },
+  );
+
+  html = html.replace(
+    /<link([^>]*?)\shref="(\/assets\/[^"]+\.(?:css|js))"([^>]*)>/gi,
+    (match, pre: string, href: string, post: string) => {
+      if (/\bintegrity=/i.test(match)) return match;
+      const integrity = computeIntegrity(href);
+      if (!integrity) return match;
+      const hasCors = /\bcrossorigin\b/i.test(match);
+      return `<link${pre} href="${href}" integrity="${integrity}"${hasCors ? '' : ' crossorigin="anonymous"'}${post}>`;
+    },
+  );
+
+  fs.writeFileSync(indexPath, html, 'utf8');
+}
 
 export default defineConfig(() => {
   return {
@@ -13,7 +53,7 @@ export default defineConfig(() => {
       // "/src/assets/images/..." (e.g. generate_image output) still resolve
       // in production builds. Do not remove.
       {
-        name: 'copy-unbundled-src-assets',
+        name: 'copy-unbundled-src-assets-and-sri',
         apply: 'build',
         closeBundle(error?: Error): void {
           if (error) {
@@ -25,6 +65,7 @@ export default defineConfig(() => {
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
           }
+          injectSubresourceIntegrity(distDir);
         },
       },
     ],
@@ -34,19 +75,24 @@ export default defineConfig(() => {
       },
     },
     build: {
+      sourcemap: false,
+      minify: true,
       chunkSizeWarningLimit: 500,
       assetsInlineLimit: 4096,
       rollupOptions: {
         output: {
+          entryFileNames: 'assets/[hash].js',
+          chunkFileNames: 'assets/[hash].js',
+          assetFileNames: 'assets/[hash][extname]',
           manualChunks(id) {
             if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-              return 'react-vendor';
+              return 'v1';
             }
             if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion')) {
-              return 'motion-vendor';
+              return 'v2';
             }
             if (id.includes('node_modules/lucide-react')) {
-              return 'icons-vendor';
+              return 'v3';
             }
             return undefined;
           },

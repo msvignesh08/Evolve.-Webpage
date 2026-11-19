@@ -1,14 +1,26 @@
 import { ArrowUp } from 'lucide-react';
 import { FocusLogo } from './FocusLogo';
 import { LegalTab } from './LegalModal';
+import { SiteThemeSwitcher } from './SiteThemeSwitcher';
+import { SiteThemeId } from '../utils/siteThemes';
 
 interface FooterProps {
   onOpenLegal: (tab: LegalTab) => void;
   onOpenCookiePreferences: () => void;
   onDemoClick: () => void;
+  onOpenAdmin: () => void;
+  siteTheme: SiteThemeId;
+  onChangeSiteTheme: (theme: SiteThemeId) => void;
 }
 
-export function Footer({ onOpenLegal, onOpenCookiePreferences, onDemoClick }: FooterProps) {
+export function Footer({
+  onOpenLegal,
+  onOpenCookiePreferences,
+  onDemoClick,
+  onOpenAdmin,
+  siteTheme,
+  onChangeSiteTheme,
+}: FooterProps) {
   const year = new Date().getFullYear();
 
   const handleDemoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -74,6 +86,13 @@ export function Footer({ onOpenLegal, onOpenCookiePreferences, onDemoClick }: Fo
             >
               Open Source &amp; Fonts
             </button>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              className="cursor-pointer transition-colors hover:text-[#60a5fa] touch-manipulation"
+            >
+              Developer Admin
+            </button>
           </nav>
 
           <a
@@ -91,12 +110,20 @@ export function Footer({ onOpenLegal, onOpenCookiePreferences, onDemoClick }: Fo
           </p>
 
           <div className="shrink-0 sm:text-right">
+            <div className="mb-3 flex items-center gap-2 sm:justify-end">
+              <span className="text-[11px] font-medium text-[#7c89a1]">Site theme:</span>
+              <SiteThemeSwitcher
+                siteTheme={siteTheme}
+                onChangeSiteTheme={onChangeSiteTheme}
+                variant="inline"
+              />
+            </div>
             <p className="text-[11px] text-[#8d9cb8]">
               © {year} FocusOS. We never sell your data.
             </p>
             <p className="mt-1.5 flex items-baseline gap-2 text-[11px] text-[#7c89a1] sm:justify-end">
               <span>Developed by</span>
-              <span className="font-display text-sm font-semibold italic tracking-[-0.02em] bg-gradient-to-r from-[#93c5fd] via-[#f4f7fb] to-[#60a5fa] bg-clip-text text-transparent">
+              <span className="highlight-text font-display text-sm font-semibold italic tracking-[-0.02em]">
                 Phantomstrange
               </span>
               <span aria-hidden="true">·</span>

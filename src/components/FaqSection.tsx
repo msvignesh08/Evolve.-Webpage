@@ -54,7 +54,7 @@ export function FaqSection() {
           </p>
         </motion.div>
 
-        <div className="max-w-[820px] divide-y divide-white/10 border-t border-b border-white/10">
+        <div className="glass-surface max-w-[820px] divide-y divide-white/10 rounded-3xl px-5 sm:px-7">
           {FAQS.map((item, idx) => {
             const isOpen = openIndex === idx;
             return (
@@ -68,7 +68,13 @@ export function FaqSection() {
                   <span className="font-display text-base font-semibold text-[#f4f7fb] sm:text-lg">
                     {item.question}
                   </span>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/10 text-[#60a5fa]">
+                  <span
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors ${
+                      isOpen
+                        ? 'border-[#60a5fa]/50 bg-[#3b82f6]/20 text-[#93c5fd]'
+                        : 'border-white/12 bg-white/[0.04] text-[#60a5fa]'
+                    }`}
+                  >
                     {isOpen ? (
                       <Minus className="h-4 w-4" aria-hidden="true" />
                     ) : (
@@ -84,7 +90,7 @@ export function FaqSection() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                      className="pr-12 pt-3 text-sm leading-relaxed text-[#9ba8bf]"
+                      className="pr-10 pt-3 text-sm leading-relaxed text-[#9ba8bf] sm:pr-12"
                     >
                       {item.answer}
                     </motion.div>
