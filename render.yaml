@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: focusos-web
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: RATE_LIMIT_MAX
+        value: "120"
+      - key: ASSET_RATE_LIMIT_MAX
+        value: "300"
+      - key: APK_RATE_LIMIT_MAX
+        value: "15"

@@ -1,0 +1,17 @@
+{
+  "name": "FocusOS",
+  "short_name": "FocusOS",
+  "description": "Make time for what matters. Protect your attention on Android with focus sessions, app blocking, study plans, and privacy-first tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a10",
+  "theme_color": "#070a10",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

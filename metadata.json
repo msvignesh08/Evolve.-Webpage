@@ -1,0 +1,6 @@
+{
+  "name": "FocusOS",
+  "description": "FocusOS helps you protect your attention with focused sessions, app blocking, study plans and progress tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
