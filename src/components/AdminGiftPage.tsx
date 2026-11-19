@@ -4,13 +4,17 @@ import {
   Check,
   Copy,
   Dice5,
+  ExternalLink,
   Eye,
   EyeOff,
+  Fingerprint,
   Gift,
   KeyRound,
   Lock,
+  Plus,
   RefreshCw,
   Send,
+  ShieldCheck,
   Smartphone,
   Sparkles,
   Trash2,
@@ -18,6 +22,15 @@ import {
 import { FocusLogo } from './FocusLogo';
 import { SiteThemeSwitcher } from './SiteThemeSwitcher';
 import { SiteThemeId } from '../utils/siteThemes';
+import {
+  ServerAuthOptions,
+  ServerRegistrationOptions,
+  createBrowserPasskeyCredential,
+  describePasskeyError,
+  getBrowserPasskeyAssertion,
+  isLikelyEmbeddedIframe,
+  isWebAuthnSupported,
+} from '../utils/webauthnClient';
 
 type GiftCategory =
   | 'subscription'
@@ -44,6 +57,16 @@ interface AdminStatusResponse {
   isProd: boolean;
   devFallback: boolean;
   corsEnabled: boolean;
+  passkeyCount?: number;
+}
+
+interface EnrolledPasskeyInfo {
+  id: string;
+  label: string;
+  alg: number;
+  transports: string[];
+  createdAt: string;
+  lastUsedAt: string | null;
 }
 
 interface AdminGiftPageProps {
@@ -115,9 +138,21 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
   const [status, setStatus] = useState<AdminStatusResponse | null>(null);
   const [passkeyInput, setPasskeyInput] = useState('');
   const [showPasskey, setShowPasskey] = useState(false);
+  const [showSecretFallback, setShowSecretFallback] = useState(false);
   const [activePasskey, setActivePasskey] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [iframeNotice, setIframeNotice] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Hardware Passkeys (WebAuthn) manager state
+  const [enrolledPasskeys, setEnrolledPasskeys] = useState<EnrolledPasskeyInfo[]>([]);
+  const [newPasskeyLabel, setNewPasskeyLabel] = useState('My Phone / Laptop');
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyNotice, setPasskeyNotice] = useState<{
+    type: 'ok' | 'err';
+    text: string;
+    iframeBlocked?: boolean;
+  } | null>(null);
 
   // Gift composer state
   const [fingerprintRaw, setFingerprintRaw] = useState('');
@@ -167,6 +202,20 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
     window.setTimeout(() => setCopiedKey(null), 1800);
   };
 
+  const loadPasskeys = useCallback(async (token: string) => {
+    try {
+      const res = await fetch('/api/admin/passkeys', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { passkeys: EnrolledPasskeyInfo[] };
+      setEnrolledPasskeys(data.passkeys ?? []);
+    } catch {
+      // Ignore transient glitch
+    }
+  }, []);
+
   const loadGifts = useCallback(
     async (token: string, fpFilter = '') => {
       setLoadingGifts(true);
@@ -202,11 +251,66 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
     [],
   );
 
+  const handlePasskeyUnlock = async () => {
+    if (!isWebAuthnSupported()) {
+      setAuthError('Passkeys are not supported in this browser. Use your recovery secret below.');
+      setShowSecretFallback(true);
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError(null);
+    setIframeNotice(false);
+    try {
+      const optRes = await fetch('/api/admin/passkey/auth-options', {
+        method: 'POST',
+        cache: 'no-store',
+      });
+      if (!optRes.ok) {
+        const err = (await optRes.json().catch(() => ({}))) as { message?: string };
+        setAuthError(err.message || 'No passkeys registered yet.');
+        setShowSecretFallback(true);
+        return;
+      }
+      const options = (await optRes.json()) as ServerAuthOptions;
+      const assertion = await getBrowserPasskeyAssertion(options);
+
+      const verRes = await fetch('/api/admin/passkey/auth-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: options.challengeToken,
+          ...assertion,
+        }),
+      });
+      const verData = (await verRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        sessionToken?: string;
+        message?: string;
+      };
+      if (!verRes.ok || !verData.sessionToken) {
+        setAuthError(verData.message || 'Passkey verification failed.');
+        return;
+      }
+
+      setActivePasskey(verData.sessionToken);
+      await Promise.all([loadGifts(verData.sessionToken, filterFp), loadPasskeys(verData.sessionToken)]);
+    } catch (err) {
+      const parsed = describePasskeyError(err);
+      setAuthError(parsed.message);
+      if (parsed.iframeBlocked) {
+        setIframeNotice(true);
+        setShowSecretFallback(true);
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleUnlock = async (e: FormEvent) => {
     e.preventDefault();
     const candidate = passkeyInput.trim();
     if (!candidate) {
-      setAuthError('Enter your developer passkey.');
+      setAuthError('Enter your recovery secret.');
       return;
     }
     setAuthLoading(true);
@@ -219,16 +323,107 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
       });
       if (!res.ok) {
         const errData = (await res.json().catch(() => ({}))) as { message?: string };
-        setAuthError(errData.message || 'Invalid passkey.');
+        setAuthError(errData.message || 'Invalid secret.');
         return;
       }
       setActivePasskey(candidate);
       setPasskeyInput('');
-      await loadGifts(candidate, filterFp);
+      await Promise.all([loadGifts(candidate, filterFp), loadPasskeys(candidate)]);
     } catch {
       setAuthError('Unable to reach server. Check your connection.');
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const handleRegisterPasskey = async () => {
+    if (!activePasskey) return;
+    if (!isWebAuthnSupported()) {
+      setPasskeyNotice({
+        type: 'err',
+        text: 'This browser does not support WebAuthn hardware passkeys.',
+      });
+      return;
+    }
+    setPasskeyBusy(true);
+    setPasskeyNotice(null);
+    try {
+      const optRes = await fetch('/api/admin/passkey/register-options', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${activePasskey}` },
+        cache: 'no-store',
+      });
+      if (!optRes.ok) {
+        const err = (await optRes.json().catch(() => ({}))) as { message?: string };
+        setPasskeyNotice({ type: 'err', text: err.message || 'Could not start registration.' });
+        return;
+      }
+      const options = (await optRes.json()) as ServerRegistrationOptions;
+      const credential = await createBrowserPasskeyCredential(options);
+
+      const verRes = await fetch('/api/admin/passkey/register-verify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${activePasskey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          challengeToken: options.challengeToken,
+          label: newPasskeyLabel.trim() || 'Developer Passkey',
+          ...credential,
+        }),
+      });
+      const verData = (await verRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        sessionToken?: string;
+        passkey?: EnrolledPasskeyInfo;
+        message?: string;
+      };
+      if (!verRes.ok || !verData.passkey) {
+        setPasskeyNotice({ type: 'err', text: verData.message || 'Passkey verification failed.' });
+        return;
+      }
+
+      if (verData.sessionToken) {
+        setActivePasskey(verData.sessionToken);
+      }
+      setPasskeyNotice({
+        type: 'ok',
+        text: `Passkey "${verData.passkey.label}" enrolled! Future logins only need your biometric prompt.`,
+      });
+      setStatus((prev) =>
+        prev ? { ...prev, passkeyCount: (prev.passkeyCount ?? 0) + 1 } : prev,
+      );
+      await loadPasskeys(verData.sessionToken || activePasskey);
+    } catch (err) {
+      const parsed = describePasskeyError(err);
+      setPasskeyNotice({
+        type: 'err',
+        text: parsed.message,
+        iframeBlocked: parsed.iframeBlocked,
+      });
+    } finally {
+      setPasskeyBusy(false);
+    }
+  };
+
+  const handleDeletePasskey = async (id: string) => {
+    if (!activePasskey) return;
+    try {
+      const res = await fetch(`/api/admin/passkeys/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${activePasskey}` },
+      });
+      if (res.ok) {
+        await loadPasskeys(activePasskey);
+        setStatus((prev) =>
+          prev
+            ? { ...prev, passkeyCount: Math.max(0, (prev.passkeyCount ?? 1) - 1) }
+            : prev,
+        );
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -428,96 +623,164 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
 
       <main className="mx-auto max-w-[1160px] px-4 pt-6 sm:px-6 sm:pt-10">
         {!activePasskey ? (
-          /* Unlock Gate */
+          /* Unlock Gate: Biometric Passkey (WebAuthn) + Bootstrap Secret Fallback */
           <div className="mx-auto max-w-[520px]">
             <div className="glass-surface-highlight rounded-3xl p-6 sm:p-8">
               <div className="mb-5 flex items-center gap-3">
                 <div className="grid h-11 w-11 place-items-center rounded-2xl border border-[#60a5fa]/40 bg-[#3b82f6]/15 text-[#93c5fd]">
-                  <KeyRound className="h-5 w-5" aria-hidden="true" />
+                  {(status?.passkeyCount ?? 0) > 0 ? (
+                    <Fingerprint className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <KeyRound className="h-5 w-5" aria-hidden="true" />
+                  )}
                 </div>
                 <div>
                   <h1 className="font-display text-xl font-bold text-[#f4f7fb]">
                     FocusOS Developer Admin
                   </h1>
                   <p className="text-xs text-[#9ba8bf]">
-                    Send gifts &amp; subscriptions by 12-digit device fingerprint
+                    {(status?.passkeyCount ?? 0) > 0
+                      ? 'Passwordless biometric Passkey sign-in ready'
+                      : 'Unlock once to enroll your biometric Passkey'}
                   </p>
                 </div>
               </div>
 
-              {status && !status.configured && status.isProd ? (
-                <div className="glass-well mb-5 rounded-2xl border border-amber-400/30 p-4 text-xs leading-relaxed text-amber-200">
-                  <strong className="font-semibold">Setup needed on Render:</strong> Add{' '}
-                  <code className="allow-select font-mono text-white">ADMIN_PASSKEY</code> in your
-                  Render Environment Variables so this console and external AI Studio admin tools
-                  stay protected.
-                </div>
-              ) : null}
-
-              {status?.devFallback ? (
-                <div className="glass-well mb-5 flex flex-wrap items-center justify-between gap-2 rounded-2xl p-3.5 text-xs text-[#9ba8bf]">
-                  <span>
-                    Local preview fallback passkey:{' '}
-                    <code className="allow-select font-mono text-[#93c5fd]">focusos-dev-admin</code>
-                  </span>
+              {(status?.passkeyCount ?? 0) > 0 && (
+                <div className="mb-5 space-y-3">
                   <button
                     type="button"
-                    onClick={() => setPasskeyInput('focusos-dev-admin')}
-                    className="rounded-lg border border-[#60a5fa]/35 bg-[#3b82f6]/15 px-2.5 py-1 text-[11px] font-semibold text-[#93c5fd] hover:bg-[#3b82f6]/25"
+                    disabled={authLoading}
+                    onClick={() => void handlePasskeyUnlock()}
+                    className="site-primary-btn inline-flex min-h-[50px] w-full items-center justify-center gap-2.5 rounded-2xl px-5 py-3 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-60 touch-manipulation"
                   >
-                    Auto-fill
+                    <Fingerprint className="h-5 w-5" aria-hidden="true" />
+                    <span>
+                      {authLoading
+                        ? 'Waiting for biometric prompt…'
+                        : 'Unlock with Biometric Passkey'}
+                    </span>
+                  </button>
+
+                  {isLikelyEmbeddedIframe() && (
+                    <div className="glass-well flex flex-wrap items-center justify-between gap-2 rounded-2xl p-3 text-[11px] text-[#9ba8bf]">
+                      <span>Using preview iframe? Biometric Passkeys require a top-level tab.</span>
+                      <a
+                        href="#admin"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold text-[#93c5fd] hover:underline"
+                      >
+                        <span>Open in new tab</span>
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSecretFallback((v) => !v)}
+                    className="w-full text-center text-xs font-medium text-[#8d9cb8] hover:text-[#cbd5e8] touch-manipulation"
+                  >
+                    {showSecretFallback
+                      ? 'Hide recovery secret'
+                      : 'Use recovery ADMIN_PASSKEY secret instead'}
                   </button>
                 </div>
-              ) : null}
+              )}
 
-              <form onSubmit={handleUnlock} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="admin-passkey"
-                    className="mb-1.5 block text-xs font-medium text-[#cbd5e8]"
-                  >
-                    Developer Admin Passkey
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="admin-passkey"
-                      type={showPasskey ? 'text' : 'password'}
-                      value={passkeyInput}
-                      onChange={(e) => setPasskeyInput(e.target.value)}
-                      placeholder="Enter ADMIN_PASSKEY"
-                      autoComplete="off"
-                      className="glass-well w-full rounded-2xl px-4 py-3 pr-11 font-mono text-sm text-[#f4f7fb] placeholder:text-[#64748b] focus:border-[#60a5fa]/60 focus:outline-none"
-                    />
+              {((status?.passkeyCount ?? 0) === 0 || showSecretFallback) && (
+                <>
+                  {status && !status.configured && status.isProd ? (
+                    <div className="glass-well mb-5 rounded-2xl border border-amber-400/30 p-4 text-xs leading-relaxed text-amber-200">
+                      <strong className="font-semibold">Setup needed on Render:</strong> Add{' '}
+                      <code className="allow-select font-mono text-white">ADMIN_PASSKEY</code> in
+                      your Render Environment Variables to unlock first-time setup and enroll your
+                      hardware Passkey.
+                    </div>
+                  ) : null}
+
+                  {status?.devFallback ? (
+                    <div className="glass-well mb-5 flex flex-wrap items-center justify-between gap-2 rounded-2xl p-3.5 text-xs text-[#9ba8bf]">
+                      <span>
+                        Dev bootstrap secret:{' '}
+                        <code className="allow-select font-mono text-[#93c5fd]">
+                          focusos-dev-admin
+                        </code>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPasskeyInput('focusos-dev-admin')}
+                        className="rounded-lg border border-[#60a5fa]/35 bg-[#3b82f6]/15 px-2.5 py-1 text-[11px] font-semibold text-[#93c5fd] hover:bg-[#3b82f6]/25"
+                      >
+                        Auto-fill
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <form onSubmit={handleUnlock} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="admin-passkey"
+                        className="mb-1.5 block text-xs font-medium text-[#cbd5e8]"
+                      >
+                        {(status?.passkeyCount ?? 0) > 0
+                          ? 'Recovery Secret (ADMIN_PASSKEY)'
+                          : 'Bootstrap Secret (ADMIN_PASSKEY)'}
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="admin-passkey"
+                          type={showPasskey ? 'text' : 'password'}
+                          value={passkeyInput}
+                          onChange={(e) => setPasskeyInput(e.target.value)}
+                          placeholder="Enter ADMIN_PASSKEY"
+                          autoComplete="off"
+                          className="glass-well w-full rounded-2xl px-4 py-3 pr-11 font-mono text-sm text-[#f4f7fb] placeholder:text-[#64748b] focus:border-[#60a5fa]/60 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasskey((v) => !v)}
+                          aria-label={showPasskey ? 'Hide secret' : 'Show secret'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#9ba8bf] hover:text-white"
+                        >
+                          {showPasskey ? (
+                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
                     <button
-                      type="button"
-                      onClick={() => setShowPasskey((v) => !v)}
-                      aria-label={showPasskey ? 'Hide passkey' : 'Show passkey'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#9ba8bf] hover:text-white"
+                      type="submit"
+                      disabled={authLoading}
+                      className="site-primary-btn inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-60 touch-manipulation"
                     >
-                      {showPasskey ? (
-                        <EyeOff className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <Eye className="h-4 w-4" aria-hidden="true" />
-                      )}
+                      <KeyRound className="h-4 w-4" aria-hidden="true" />
+                      <span>{authLoading ? 'Verifying…' : 'Unlock Gift Console'}</span>
                     </button>
-                  </div>
+                  </form>
+                </>
+              )}
+
+              {authError && (
+                <div className="mt-4 space-y-2 rounded-xl border border-rose-400/35 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
+                  <p>{authError}</p>
+                  {iframeNotice && (
+                    <a
+                      href="#admin"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-white underline"
+                    >
+                      <span>Open #admin in a standalone tab</span>
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  )}
                 </div>
-
-                {authError && (
-                  <p className="rounded-xl border border-rose-400/35 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
-                    {authError}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={authLoading}
-                  className="site-primary-btn inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-60"
-                >
-                  <KeyRound className="h-4 w-4" aria-hidden="true" />
-                  <span>{authLoading ? 'Verifying…' : 'Unlock Gift Console'}</span>
-                </button>
-              </form>
+              )}
             </div>
           </div>
         ) : (
@@ -926,6 +1189,106 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                       </div>
                     ))}
                   </div>
+                </section>
+
+                {/* Biometric Hardware Passkeys (WebAuthn / FIDO2) */}
+                <section className="glass-surface rounded-3xl p-5 sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div>
+                      <h2 className="flex items-center gap-2 font-display text-base font-semibold text-[#f4f7fb]">
+                        <Fingerprint className="h-4 w-4 text-[#34d399]" aria-hidden="true" />
+                        <span>Biometric Passkeys (Face ID / Touch ID / Android Fingerprint)</span>
+                      </h2>
+                      <p className="mt-1 text-xs leading-relaxed text-[#9ba8bf]">
+                        Enroll your phone or laptop passkey so future logins require only a
+                        biometric tap instead of typing{' '}
+                        <code className="allow-select font-mono text-[#cbd5e8]">ADMIN_PASSKEY</code>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                    <input
+                      type="text"
+                      value={newPasskeyLabel}
+                      onChange={(e) => setNewPasskeyLabel(e.target.value)}
+                      maxLength={48}
+                      placeholder="Device name (e.g. S25 Ultra, Laptop)"
+                      className="glass-well flex-1 rounded-2xl px-3.5 py-2.5 text-xs text-[#f4f7fb] placeholder:text-[#64748b] focus:border-[#60a5fa]/60 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={passkeyBusy}
+                      onClick={() => void handleRegisterPasskey()}
+                      className="site-primary-btn inline-flex min-h-[42px] shrink-0 items-center justify-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-60 touch-manipulation"
+                    >
+                      <Plus className="h-4 w-4" aria-hidden="true" />
+                      <span>
+                        {passkeyBusy ? 'Waiting for device…' : 'Register This Device Passkey'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {passkeyNotice && (
+                    <div
+                      className={`mt-3 space-y-1.5 rounded-2xl border px-3.5 py-2.5 text-xs ${
+                        passkeyNotice.type === 'ok'
+                          ? 'border-[#34d399]/35 bg-[#10b981]/10 text-[#a7f3d0]'
+                          : 'border-rose-400/35 bg-rose-500/10 text-rose-200'
+                      }`}
+                    >
+                      <p>{passkeyNotice.text}</p>
+                      {passkeyNotice.iframeBlocked && (
+                        <a
+                          href="#admin"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-white underline"
+                        >
+                          <span>Open #admin in a standalone tab to enroll Passkey</span>
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {enrolledPasskeys.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {enrolledPasskeys.map((pk) => (
+                        <div
+                          key={pk.id}
+                          className="glass-well flex items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5"
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <ShieldCheck
+                              className="h-4 w-4 shrink-0 text-[#34d399]"
+                              aria-hidden="true"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-xs font-semibold text-[#f4f7fb]">
+                                {pk.label}
+                              </div>
+                              <div className="truncate font-mono text-[10px] text-[#8d9cb8]">
+                                {pk.alg === -7 ? 'ES256 (P-256)' : 'RS256'} · Added{' '}
+                                {new Date(pk.createdAt).toLocaleDateString()}
+                                {pk.lastUsedAt
+                                  ? ` · Last used ${new Date(pk.lastUsedAt).toLocaleDateString()}`
+                                  : ''}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeletePasskey(pk.id)}
+                            aria-label={`Revoke passkey ${pk.label}`}
+                            className="rounded-lg border border-rose-400/25 bg-rose-500/10 p-1.5 text-rose-300 hover:bg-rose-500/20 touch-manipulation"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
               </div>
             </div>

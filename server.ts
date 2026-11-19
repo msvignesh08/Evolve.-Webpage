@@ -9,6 +9,15 @@ import zlib from 'node:zlib';
 import dotenv from 'dotenv';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
+import {
+  createChallengeToken,
+  createPasskeyStore,
+  issueAdminSessionToken,
+  toBase64Url,
+  verifyAdminSessionToken,
+  verifyAuthenticationResponse,
+  verifyRegistrationResponse,
+} from './server/webauthn.ts';
 
 dotenv.config();
 
@@ -16,6 +25,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isProd = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || 3000);
+
+// Ensure primary & all forked cluster workers share an identical HMAC secret
+if (!process.env.FOCUSOS_INTERNAL_HMAC_SECRET) {
+  process.env.FOCUSOS_INTERNAL_HMAC_SECRET =
+    process.env.ADMIN_SESSION_SECRET?.trim() ||
+    (process.env.ADMIN_PASSKEY?.trim()
+      ? crypto
+          .createHash('sha256')
+          .update(`focusos-session:${process.env.ADMIN_PASSKEY.trim()}`)
+          .digest('hex')
+      : crypto.randomBytes(32).toString('hex'));
+}
 
 // ---------------------------------------------------------------------------
 // 1. Cluster Load Balancing (Production multi-worker round-robin)
@@ -590,6 +611,41 @@ function isGiftExpired(gift: DeviceGift, nowMs = Date.now()): boolean {
   return Number.isFinite(exp) && exp <= nowMs;
 }
 
+const PASSKEYS_STORE_PATH = process.env.PASSKEYS_STORE_PATH?.trim()
+  ? path.resolve(process.env.PASSKEYS_STORE_PATH.trim())
+  : path.join(path.dirname(GIFTS_STORE_PATH), 'passkeys.json');
+const passkeyStore = createPasskeyStore(PASSKEYS_STORE_PATH);
+
+function getSessionHmacSecret(): string {
+  return process.env.FOCUSOS_INTERNAL_HMAC_SECRET || 'focusos-dev-hmac-fallback';
+}
+
+function resolveWebAuthnRpAndOrigin(req: Request): { rpId: string; origin: string } {
+  const originHeader = typeof req.headers.origin === 'string' ? req.headers.origin.trim() : '';
+  if (originHeader) {
+    try {
+      const parsed = new URL(originHeader);
+      return {
+        rpId: parsed.hostname,
+        origin: parsed.origin,
+      };
+    } catch {
+      // Fall back to request host
+    }
+  }
+  const protoHeader = String(req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http'))
+    .split(',')[0]
+    .trim();
+  const hostHeader = String(req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000')
+    .split(',')[0]
+    .trim();
+  const rpId = hostHeader.replace(/:\d+$/, '');
+  return {
+    rpId,
+    origin: `${protoHeader}://${hostHeader}`,
+  };
+}
+
 function getEffectiveAdminPasskey(): { passkey: string | null; devFallback: boolean } {
   const configured = process.env.ADMIN_PASSKEY?.trim();
   if (configured && configured.length >= 6 && configured !== 'CHANGE_ME_STRONG_PASSKEY') {
@@ -601,10 +657,26 @@ function getEffectiveAdminPasskey(): { passkey: string | null; devFallback: bool
   return { passkey: null, devFallback: false };
 }
 
-function verifyBearerPasskey(authHeader: string | undefined, expected: string): boolean {
+function verifyBearerPasskey(authHeader: string | undefined, expected: string | null): boolean {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
   const supplied = authHeader.slice(7).trim();
   if (!supplied) return false;
+
+  // 1. Check short-lived HMAC-signed WebAuthn passkey session token (15-min TTL)
+  if (supplied.startsWith('adm_')) {
+    const claims = verifyAdminSessionToken(supplied, getSessionHmacSecret());
+    if (claims) {
+      // Ensure the passkey credential has not since been revoked
+      const registered = passkeyStore.read();
+      if (registered.some((pk) => pk.id === claims.credId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 2. Fall back to bootstrap/recovery ADMIN_PASSKEY secret
+  if (!expected) return false;
   const suppliedDigest = crypto.createHash('sha256').update(supplied).digest();
   const expectedDigest = crypto.createHash('sha256').update(expected).digest();
   return crypto.timingSafeEqual(suppliedDigest, expectedDigest);
@@ -736,7 +808,7 @@ async function startHttpServer() {
       /\.parts\.json$/i.test(p) ||
       /\.map$/i.test(p) ||
       (isProd && /\.(ts|tsx|mts|cts)$/i.test(p)) ||
-      /^\/(\.env|\.git|data\/|scripts\/|package(-lock)?\.json|tsconfig\.json|render\.yaml)/i.test(p)
+      /^\/(\.env|\.git|data\/|server\/|scripts\/|package(-lock)?\.json|tsconfig\.json|render\.yaml)/i.test(p)
     ) {
       res.status(404).end();
       return;
@@ -861,11 +933,13 @@ async function startHttpServer() {
     applyAdminCors(req, res);
     res.setHeader('Cache-Control', 'no-store');
     const { passkey, devFallback } = getEffectiveAdminPasskey();
+    const passkeys = passkeyStore.read();
     res.status(200).json({
-      configured: Boolean(passkey),
+      configured: Boolean(passkey) || passkeys.length > 0,
       isProd,
       devFallback,
       corsEnabled: Boolean(process.env.ADMIN_CORS_ORIGIN?.trim()),
+      passkeyCount: passkeys.length,
     });
   });
 
@@ -874,7 +948,8 @@ async function startHttpServer() {
     res.setHeader('Cache-Control', 'no-store');
 
     const { passkey } = getEffectiveAdminPasskey();
-    if (!passkey) {
+    const passkeyCount = passkeyStore.read().length;
+    if (!passkey && passkeyCount === 0) {
       res.status(503).json({
         error: 'ADMIN_PASSKEY_NOT_CONFIGURED',
         message: 'Set ADMIN_PASSKEY in Render Environment Variables to unlock Developer Admin.',
@@ -885,7 +960,7 @@ async function startHttpServer() {
     if (!verifyBearerPasskey(req.headers.authorization, passkey)) {
       res.status(401).json({
         error: 'UNAUTHORIZED',
-        message: 'Invalid developer admin passkey.',
+        message: 'Invalid or expired developer admin passkey.',
       });
       return;
     }
@@ -904,6 +979,247 @@ async function startHttpServer() {
         claimed: gifts.filter((g) => Boolean(g.claimedAt)).length,
       },
     });
+  });
+
+  // -------------------------------------------------------------------------
+  // Hardware Passkey (WebAuthn / FIDO2) Biometric Admin Authentication
+  // -------------------------------------------------------------------------
+  app.post('/api/admin/passkey/auth-options', adminRateLimiter, (req, res) => {
+    applyAdminCors(req, res);
+    res.setHeader('Cache-Control', 'no-store');
+
+    const registered = passkeyStore.read();
+    if (registered.length === 0) {
+      res.status(400).json({
+        error: 'NO_PASSKEYS_ENROLLED',
+        message: 'No hardware passkey enrolled yet. Unlock once with your secret to register one.',
+      });
+      return;
+    }
+
+    const { rpId, origin } = resolveWebAuthnRpAndOrigin(req);
+    const { challenge, challengeToken } = createChallengeToken(
+      'auth',
+      rpId,
+      origin,
+      getSessionHmacSecret(),
+    );
+
+    res.status(200).json({
+      rpId,
+      challenge,
+      challengeToken,
+      timeout: 60_000,
+      userVerification: 'preferred',
+      allowCredentials: registered.map((pk) => ({
+        id: pk.id,
+        type: 'public-key',
+        transports: pk.transports,
+      })),
+    });
+  });
+
+  app.post('/api/admin/passkey/auth-verify', adminRateLimiter, giftJsonParser, (req, res) => {
+    applyAdminCors(req, res);
+    res.setHeader('Cache-Control', 'no-store');
+
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      challengeToken?: unknown;
+      id?: unknown;
+      response?: {
+        clientDataJSON?: unknown;
+        authenticatorData?: unknown;
+        signature?: unknown;
+      };
+    };
+
+    if (
+      typeof body.challengeToken !== 'string' ||
+      typeof body.id !== 'string' ||
+      !body.response ||
+      typeof body.response.clientDataJSON !== 'string' ||
+      typeof body.response.authenticatorData !== 'string' ||
+      typeof body.response.signature !== 'string'
+    ) {
+      res.status(400).json({
+        error: 'INVALID_ASSERTION',
+        message: 'Malformed WebAuthn authentication payload.',
+      });
+      return;
+    }
+
+    try {
+      const existing = passkeyStore.read();
+      const { passkey, newSignCount } = verifyAuthenticationResponse({
+        challengeToken: body.challengeToken,
+        id: body.id,
+        clientDataJSON: body.response.clientDataJSON,
+        authenticatorData: body.response.authenticatorData,
+        signature: body.response.signature,
+        storedPasskeys: existing,
+        secret: getSessionHmacSecret(),
+      });
+
+      const updated = existing.map((item) =>
+        item.id === passkey.id
+          ? {
+              ...item,
+              signCount: Math.max(item.signCount, newSignCount),
+              lastUsedAt: new Date().toISOString(),
+            }
+          : item,
+      );
+      passkeyStore.write(updated);
+
+      const sessionToken = issueAdminSessionToken(passkey.id, getSessionHmacSecret());
+      res.status(200).json({
+        ok: true,
+        sessionToken,
+        expiresInSeconds: 900,
+        passkeyLabel: passkey.label,
+      });
+    } catch (err) {
+      res.status(401).json({
+        error: 'PASSKEY_AUTH_FAILED',
+        message: err instanceof Error ? err.message : 'Passkey verification failed.',
+      });
+    }
+  });
+
+  app.get('/api/admin/passkeys', adminRateLimiter, requireAdminAuth, (_req, res) => {
+    const list = passkeyStore.read().map((pk) => ({
+      id: pk.id,
+      label: pk.label,
+      alg: pk.alg,
+      transports: pk.transports,
+      createdAt: pk.createdAt,
+      lastUsedAt: pk.lastUsedAt,
+    }));
+    res.status(200).json({ passkeys: list });
+  });
+
+  app.post('/api/admin/passkey/register-options', adminRateLimiter, requireAdminAuth, (req, res) => {
+    const { rpId, origin } = resolveWebAuthnRpAndOrigin(req);
+    const { challenge, challengeToken } = createChallengeToken(
+      'register',
+      rpId,
+      origin,
+      getSessionHmacSecret(),
+    );
+    const existing = passkeyStore.read();
+    const userHandle = toBase64Url(crypto.createHash('sha256').update('focusos-developer-admin').digest().subarray(0, 16));
+
+    res.status(200).json({
+      rp: { name: 'FocusOS Developer Admin', id: rpId },
+      user: {
+        id: userHandle,
+        name: 'phantomstrange',
+        displayName: 'Phantomstrange (FocusOS Admin)',
+      },
+      challenge,
+      challengeToken,
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 }, // ES256 (Android Fingerprint / Face ID / Touch ID)
+        { type: 'public-key', alg: -257 }, // RS256 fallback
+      ],
+      timeout: 60_000,
+      attestation: 'none',
+      authenticatorSelection: {
+        residentKey: 'preferred',
+        userVerification: 'preferred',
+      },
+      excludeCredentials: existing.map((pk) => ({
+        id: pk.id,
+        type: 'public-key',
+        transports: pk.transports,
+      })),
+    });
+  });
+
+  app.post(
+    '/api/admin/passkey/register-verify',
+    adminRateLimiter,
+    requireAdminAuth,
+    giftJsonParser,
+    (req, res) => {
+      const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+        challengeToken?: unknown;
+        label?: unknown;
+        id?: unknown;
+        rawId?: unknown;
+        response?: {
+          clientDataJSON?: unknown;
+          attestationObject?: unknown;
+          transports?: unknown;
+        };
+      };
+
+      if (
+        typeof body.challengeToken !== 'string' ||
+        typeof body.id !== 'string' ||
+        typeof body.rawId !== 'string' ||
+        !body.response ||
+        typeof body.response.clientDataJSON !== 'string' ||
+        typeof body.response.attestationObject !== 'string'
+      ) {
+        res.status(400).json({
+          error: 'INVALID_ATTESTATION',
+          message: 'Malformed WebAuthn registration payload.',
+        });
+        return;
+      }
+
+      try {
+        const stored = verifyRegistrationResponse({
+          challengeToken: body.challengeToken,
+          id: body.id,
+          rawId: body.rawId,
+          clientDataJSON: body.response.clientDataJSON,
+          attestationObject: body.response.attestationObject,
+          transports: Array.isArray(body.response.transports)
+            ? body.response.transports.filter((t): t is string => typeof t === 'string')
+            : [],
+          label: typeof body.label === 'string' ? body.label : 'Developer Device',
+          secret: getSessionHmacSecret(),
+        });
+
+        const existing = passkeyStore.read().filter((pk) => pk.id !== stored.id);
+        passkeyStore.write([...existing, stored]);
+
+        // Upgrade current session into a short-lived passkey-bound session token as well
+        const sessionToken = issueAdminSessionToken(stored.id, getSessionHmacSecret());
+        res.status(201).json({
+          ok: true,
+          sessionToken,
+          passkey: {
+            id: stored.id,
+            label: stored.label,
+            alg: stored.alg,
+            transports: stored.transports,
+            createdAt: stored.createdAt,
+            lastUsedAt: stored.lastUsedAt,
+          },
+        });
+      } catch (err) {
+        res.status(400).json({
+          error: 'PASSKEY_REGISTRATION_FAILED',
+          message: err instanceof Error ? err.message : 'Could not verify hardware passkey.',
+        });
+      }
+    },
+  );
+
+  app.delete('/api/admin/passkeys/:id', adminRateLimiter, requireAdminAuth, (req, res) => {
+    const rawId = req.params.id;
+    const id = typeof rawId === 'string' ? rawId.trim() : '';
+    const existing = passkeyStore.read();
+    const nextList = existing.filter((pk) => pk.id !== id);
+    if (nextList.length === existing.length) {
+      res.status(404).json({ error: 'NOT_FOUND' });
+      return;
+    }
+    passkeyStore.write(nextList);
+    res.status(200).json({ ok: true, deletedId: id });
   });
 
   app.get('/api/admin/gifts', adminRateLimiter, requireAdminAuth, (req, res) => {
