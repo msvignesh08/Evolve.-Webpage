@@ -79,7 +79,7 @@ export function FeaturesBento() {
             Build a routine that protects your attention.
           </h2>
           <p className="mt-3.5 text-[15px] leading-relaxed text-[#9ba8bf] sm:mt-4 sm:text-base">
-            FocusOS gives your study time a clear structure — with custom themes, UI toggles, and strict session locks when distractions show up.
+            Evolve gives your study time a clear structure — with custom themes, UI toggles, and strict session locks when distractions show up.
           </p>
         </motion.div>
 
@@ -321,7 +321,7 @@ export function FeaturesBento() {
                   </button>
                 </div>
                 <p className="mt-2 text-[11px] text-[#7c89a1]">
-                  Share a code in FocusOS Rooms to study in sync.
+                  Share a code in Evolve Rooms to study in sync.
                 </p>
               </div>
             </div>

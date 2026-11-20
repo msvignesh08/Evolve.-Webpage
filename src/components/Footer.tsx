@@ -37,7 +37,7 @@ export function Footer({
           <div className="flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-[#f4f7fb]">
             <FocusLogo className="h-7 w-7" />
             <span>
-              FocusOS<span className="text-[#3b82f6]">.</span>
+              Evolve<span style={{ color: 'var(--site-accent-pale)' }}>.</span>
             </span>
           </div>
 
@@ -47,6 +47,9 @@ export function Footer({
             </a>
             <a href="#demo" onClick={handleDemoClick} className="transition-colors hover:text-[#60a5fa]">
               Demo
+            </a>
+            <a href="#permissions" className="transition-colors hover:text-[#60a5fa]">
+              Permissions
             </a>
             <a href="#download" className="transition-colors hover:text-[#60a5fa]">
               Download
@@ -106,7 +109,7 @@ export function Footer({
 
         <div className="mt-5 flex flex-col justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row sm:items-end">
           <p className="max-w-[780px] text-[11px] leading-relaxed text-[#6b7890]">
-            FocusOS is an independent personal productivity tool provided &ldquo;AS IS&rdquo; without warranty of any kind, express or implied, and is not intended for safety-critical or emergency use. Android and Google Play are trademarks of Google LLC; Pantone is a registered trademark of Pantone LLC (Pantone-inspired theme shades are approximate digital matches); third-party app names shown in the web preview are illustrative examples with no affiliation. Web typography served via Google Fonts under the SIL Open Font License 1.1; open-source libraries licensed under MIT and ISC licenses.
+            Evolve is an independent personal productivity tool provided &ldquo;AS IS&rdquo; without warranty of any kind, express or implied, and is not intended for safety-critical or emergency use. Android and Google Play are trademarks of Google LLC; Pantone is a registered trademark of Pantone LLC (Pantone-inspired theme shades are approximate digital matches); third-party app names shown in the web preview are illustrative examples with no affiliation. Web typography served via Google Fonts under the SIL Open Font License 1.1; open-source libraries licensed under MIT and ISC licenses.
           </p>
 
           <div className="shrink-0 sm:text-right">
@@ -119,7 +122,7 @@ export function Footer({
               />
             </div>
             <p className="text-[11px] text-[#8d9cb8]">
-              © {year} FocusOS. We never sell your data.
+              © {year} Evolve. We never sell your data.
             </p>
             <p className="mt-1.5 flex items-baseline gap-2 text-[11px] text-[#7c89a1] sm:justify-end">
               <span>Developed by</span>

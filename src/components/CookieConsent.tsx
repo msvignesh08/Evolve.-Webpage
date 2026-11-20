@@ -202,7 +202,7 @@ export function CookieConsent({
                     </span>
                   </div>
                   <p className="mt-1.5 text-xs leading-relaxed text-[#8d9cb8]">
-                    FocusOS loads zero ad networks, zero cross-site trackers, and zero behavioural analytics cookies.
+                    Evolve loads zero ad networks, zero cross-site trackers, and zero behavioural analytics cookies.
                   </p>
                 </div>
 

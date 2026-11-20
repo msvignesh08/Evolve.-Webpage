@@ -31,7 +31,7 @@ export function FullScreenDemoPage({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       role="dialog"
       aria-modal="true"
-      aria-label="FocusOS full-screen 1:1 interactive app demo"
+      aria-label="Evolve full-screen 1:1 interactive app demo"
       className="site-bg site-theme-scope fixed inset-0 z-50 flex h-[100dvh] w-full flex-col text-[#f4f7fb]"
     >
       {/* Minimal Separate-Page Navigation Bar (clears notch / Dynamic Island / punch-hole) */}
@@ -46,7 +46,7 @@ export function FullScreenDemoPage({
         </button>
 
         <span className="font-mono text-[11px] font-medium text-[#7c89a1]">
-          FocusOS · 1:1 Demo
+          Evolve · 1:1 Demo
         </span>
 
         <button

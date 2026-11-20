@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * FocusOS GitHub & Render 19-24 MB File Splitter / Size Auditor
+ * Evolve GitHub & Render 19-24 MB File Splitter / Size Auditor
  *
  * Keeps every file in the repository within GitHub's 25 MB browser upload limit
  * by splitting large binaries (such as Android APKs) into 19-24 MB parts that
@@ -8,7 +8,7 @@
  *
  * Usage:
  *   npm run check:sizes
- *   npm run split:apk -- ./FocusOS-debug.apk --size-mb=20
+ *   npm run split:apk -- ./Evolve-debug.apk --size-mb=20
  */
 
 import crypto from 'node:crypto';

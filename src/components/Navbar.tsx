@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '#features', label: 'Features' },
   { href: '#demo', label: 'Demo' },
   { href: '#how', label: 'How it works' },
+  { href: '#permissions', label: 'Permissions' },
   { href: '#privacy', label: 'Privacy' },
   { href: '#faq', label: 'FAQ' },
 ];
@@ -49,15 +50,17 @@ export function Navbar({ onDemoClick, siteTheme, onChangeSiteTheme }: NavbarProp
         {/* Zone 1: Single-line Brand Wordmark */}
         <a
           href="#top"
-          aria-label="FocusOS home"
+          aria-label="Evolve home"
           className="flex min-h-[44px] shrink-0 items-center gap-2.5 whitespace-nowrap font-display text-lg font-bold tracking-tight text-[#f4f7fb] touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3b82f6] sm:text-xl"
         >
           <FocusLogo className="h-8 w-8 sm:h-9 sm:w-9" />
-          <span>FocusOS</span>
+          <span>
+            Evolve<span style={{ color: 'var(--site-accent-pale)' }}>.</span>
+          </span>
         </a>
 
-        {/* Zone 2: 5 concise single-line nav links */}
-        <nav aria-label="Primary navigation" className="hidden items-center gap-7 md:flex">
+        {/* Zone 2: 6 concise single-line nav links */}
+        <nav aria-label="Primary navigation" className="hidden items-center gap-5 md:flex lg:gap-7">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -86,7 +89,7 @@ export function Navbar({ onDemoClick, siteTheme, onChangeSiteTheme }: NavbarProp
             href="#download"
             className="site-primary-btn hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 md:inline-flex"
           >
-            <span>Get FocusOS</span>
+            <span>Get Evolve</span>
             <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </a>
 

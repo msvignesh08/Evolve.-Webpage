@@ -92,7 +92,7 @@ const RANDOM_GIFT_PRESETS: Array<{
 }> = [
   {
     category: 'subscription',
-    title: 'FocusOS Pro Pass · 30 Days',
+    title: 'Evolve Pro Pass · 30 Days',
     message: 'Gift from Phantomstrange — enjoy Pro skins, expanded Rooms, and bonus perks.',
     payload: { rewardType: 'subscription', tier: 'pro', durationDays: 30, adFree: true },
   },
@@ -111,13 +111,13 @@ const RANDOM_GIFT_PRESETS: Array<{
   {
     category: 'feature_unlock',
     title: 'Vault Unrevealed Feature Key',
-    message: 'Hidden developer drop unlocked! Reveals an unreleased FocusOS experimental module.',
+    message: 'Hidden developer drop unlocked! Reveals an unreleased Evolve experimental module.',
     payload: { rewardType: 'feature_unlock', moduleKey: 'mystery_focus_lab_v2', tier: 'vip' },
   },
   {
     category: 'random_gift',
     title: 'Phantomstrange Surprise Crate',
-    message: 'A random developer gift picked just for your 12-digit FocusOS fingerprint.',
+    message: 'A random developer gift picked just for your 12-digit Evolve fingerprint.',
     payload: { rewardType: 'random_crate', bonusStreakShields: 3, specialBadge: 'founder-gift' },
   },
 ];
@@ -597,7 +597,7 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
               className="glass-surface inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold text-[#cbd5e8] transition-colors hover:border-white/30 hover:text-white touch-manipulation"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Back to FocusOS</span>
+              <span>Back to Evolve</span>
             </button>
             <div className="hidden items-center gap-2 sm:flex">
               <FocusLogo className="h-6 w-6" />
@@ -662,7 +662,7 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                 </div>
                 <div>
                   <h1 className="font-display text-xl font-bold text-[#f4f7fb]">
-                    FocusOS Developer Admin
+                    Evolve Developer Admin
                   </h1>
                   <p className="text-xs text-[#9ba8bf]">
                     {(status?.passkeyCount ?? 0) > 0

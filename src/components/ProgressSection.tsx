@@ -190,7 +190,7 @@ export function ProgressSection() {
             We never sell your data. Not now, not ever.
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-[#9ba8bf] sm:text-base">
-            FocusOS is built to protect your attention, not monetize it. Track your progress and build your streak knowing your habits stay completely yours.
+            Evolve is built to protect your attention, not monetize it. Track your progress and build your streak knowing your habits stay completely yours.
           </p>
 
           <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
@@ -210,7 +210,7 @@ export function ProgressSection() {
             href="#download"
             className="glass-surface mt-6 inline-flex min-h-[48px] w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-sm font-semibold text-[#f4f7fb] transition-all duration-150 active:scale-[0.98] hover:border-[#60a5fa]/55 hover:brightness-110 touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] sm:mt-7 sm:w-auto"
           >
-            <span>Download FocusOS</span>
+            <span>Download Evolve</span>
             <ArrowUpRight className="h-4 w-4 text-[#60a5fa]" aria-hidden="true" />
           </a>
         </motion.div>

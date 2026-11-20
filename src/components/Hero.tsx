@@ -42,7 +42,7 @@ export function Hero({ onOpenDemo }: HeroProps) {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
             <p className="mb-3.5 text-xs font-semibold tracking-wide text-[#60a5fa] sm:mb-5 sm:text-sm">
-              FocusOS for Android · Zero ads · We never sell your data
+              Evolve for Android · Zero ads · We never sell your data
             </p>
 
             <h1 className="max-w-[640px] text-balance font-display text-[clamp(2.15rem,8.4vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.04em] text-[#f4f7fb]">
@@ -50,7 +50,7 @@ export function Hero({ onOpenDemo }: HeroProps) {
             </h1>
 
             <p className="mt-4 max-w-[530px] text-[15px] leading-relaxed text-[#9ba8bf] sm:mt-6 sm:text-lg">
-              Less scrolling. More doing. FocusOS protects your attention on Android with focused sessions, smart app blocking, custom themes, and on-device progress tracking.
+              Less scrolling. More doing. Evolve protects your attention on Android with focused sessions, smart app blocking, custom themes, and on-device progress tracking.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5">
@@ -99,16 +99,22 @@ export function Hero({ onOpenDemo }: HeroProps) {
                   <FocusLogo className="h-9 w-9" />
                   <div>
                     <p className="font-display text-lg font-bold tracking-tight text-[#f4f7fb]">
-                      FocusOS
+                      Evolve<span style={{ color: 'var(--site-accent-pale)' }}>.</span>
                     </p>
                     <p className="text-xs text-[#8d9cb8]">Make time for what matters.</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-[#34d399]">Ready</span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#34d399]">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.85)]"
+                    aria-hidden="true"
+                  />
+                  <span>Ready</span>
+                </span>
               </div>
 
               <div className="glass-well mt-5 rounded-2xl px-4 py-3 text-xs italic text-[#cbd8f0]">
-                “Your goal is closer than it feels.”
+                “Get yourself back on track.”
               </div>
 
               <div className="glass-well mt-4 flex flex-col items-center rounded-2xl px-4 py-5 sm:mt-5 sm:px-5 sm:py-6">

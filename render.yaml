@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: focusos-web
+    name: evolve
     runtime: node
     plan: free
     region: oregon

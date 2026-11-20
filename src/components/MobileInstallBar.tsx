@@ -36,7 +36,7 @@ export function MobileInstallBar() {
               <FocusLogo className="h-8 w-8 shrink-0" />
               <div className="min-w-0">
                 <p className="truncate font-display text-xs font-bold text-[#f4f7fb]">
-                  FocusOS for Android
+                  Evolve for Android
                 </p>
                 <p className="truncate text-[11px] text-[#8d9cb8]">
                   Zero ads · We never sell your data

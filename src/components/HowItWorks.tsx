@@ -17,7 +17,7 @@ const STEPS = [
   {
     number: '3',
     title: 'Start focus mode',
-    description: 'Let FocusOS help keep distracting apps out of reach.',
+    description: 'Let Evolve help keep distracting apps out of reach.',
     detail: 'Enable Stricter mode whenever you want no pause and an EXIT confirmation lock.',
   },
   {

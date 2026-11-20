@@ -19,7 +19,7 @@ import {
 import { AppEntry, DemoTab, StudyBlockEntry, THEMES, ThemeId } from './focusDemoTypes';
 
 const QUOTES = [
-  '“Your goal is closer than it feels.”',
+  '“Get yourself back on track.”',
   '“Tonight’s effort is tomorrow’s confidence.”',
   '“Ready when you are. Resume and finish strong.”',
 ];
@@ -380,7 +380,7 @@ export function FocusAppSimulator({
               </div>
 
               <p className="mt-2.5 text-[11px] text-[#7c89a1]">
-                Phone, your home screen and FocusOS are always available.
+                Phone, your home screen and Evolve are always available.
               </p>
 
               <div className="relative mt-3">
@@ -457,7 +457,7 @@ export function FocusAppSimulator({
                     className="font-display text-2xl font-bold tracking-tight"
                     style={{ color: activeTheme.ringTo }}
                   >
-                    FocusOS
+                    Evolve<span className="text-[#f4f7fb]">.</span>
                   </h3>
                   <p className="text-xs text-[#8d9cb8]">Make time for what matters.</p>
                 </div>
@@ -644,7 +644,7 @@ export function FocusAppSimulator({
 
                       <p className="mt-2 text-[11px] leading-relaxed text-[#9ba8bf]">
                         {allowedCount === 0
-                          ? 'This group has no apps. During a session everything except Phone, your home screen and FocusOS will be blocked.'
+                          ? 'This group has no apps. During a session everything except Phone, your home screen and Evolve will be blocked.'
                           : `${allowedCount} allowed apps stay available. All other apps stay blocked during your session.`}
                       </p>
 
@@ -1417,7 +1417,7 @@ export function FocusAppSimulator({
                 <span className="text-[10px] font-semibold tracking-widest text-[#8d9cb8] uppercase">
                   General
                 </span>
-                <p className="mt-1 text-xs font-semibold text-[#f4f7fb]">FocusOS 2.5.0</p>
+                <p className="mt-1 text-xs font-semibold text-[#f4f7fb]">Evolve 2.5.0</p>
                 <p className="mt-1 text-[11px] text-[#8d9cb8]">
                   Everything is stored on this device only.
                 </p>
@@ -1430,7 +1430,7 @@ export function FocusAppSimulator({
       {/* Android Bottom Tab Bar (5 tabs) */}
       <div
         role="tablist"
-        aria-label="FocusOS app navigation"
+        aria-label="Evolve app navigation"
         className={`grid shrink-0 grid-cols-5 border-t border-white/10 bg-[#080a10]/95 px-1.5 pt-1.5 backdrop-blur-md ${
           isFullScreen ? 'pb-[max(0.5rem,env(safe-area-inset-bottom))]' : 'pb-2'
         }`}
@@ -1493,7 +1493,7 @@ export function FocusAppSimulator({
                 {blockedCountdown}
               </p>
               <p className="mt-1 text-[11px] text-[#8d9cb8] tabular-nums">
-                Returning to FocusOS in {blockedCountdown} s
+                Returning to Evolve in {blockedCountdown} s
               </p>
               <button
                 type="button"
@@ -1504,7 +1504,7 @@ export function FocusAppSimulator({
                   color: buttonTextColor,
                 }}
               >
-                Back to FocusOS now
+                Back to Evolve now
               </button>
             </div>
           </motion.div>
@@ -1598,7 +1598,7 @@ export function FocusAppSimulator({
                     • Your focus history, settings, app groups and timetable are stored only on this
                     phone.
                   </li>
-                  <li>• FocusOS has no ads, no analytics and no accounts.</li>
+                  <li>• Evolve has no ads, no analytics and no accounts.</li>
                   <li>
                     • Only exception: if you use Rooms, your nickname and focus status are shared with
                     that room until it ends.
@@ -1606,7 +1606,7 @@ export function FocusAppSimulator({
                 </ul>
               ) : (
                 <p className="mt-3 text-xs leading-relaxed text-[#c4d0e6]">
-                  FocusOS is a personal focus tool that helps you block distracting apps during
+                  Evolve is a personal focus tool that helps you block distracting apps during
                   study sessions that you start yourself. Stricter mode limits pausing and leaving
                   a session early.
                 </p>

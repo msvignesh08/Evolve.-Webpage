@@ -33,7 +33,7 @@ export function FocusShieldShowcase() {
             Turn phone noise into <span className="highlight-text">quiet focus.</span>
           </h2>
           <p className="mt-3.5 max-w-[490px] text-[15px] leading-relaxed text-[#9ba8bf] sm:mt-4 sm:text-base">
-            Toggle the shield to compare how your phone behaves during a study block before you install FocusOS.
+            Toggle the shield to compare how your phone behaves during a study block before you install Evolve.
           </p>
 
           {/* Segmented Mode Switch */}
@@ -51,7 +51,7 @@ export function FocusShieldShowcase() {
                   : 'text-[#8d9cb8] hover:text-[#dce5f5]'
               }`}
             >
-              Without FocusOS
+              Without Evolve
             </button>
             <button
               type="button"
@@ -62,7 +62,7 @@ export function FocusShieldShowcase() {
                   : 'text-[#8d9cb8] hover:text-[#dce5f5]'
               }`}
             >
-              With FocusOS Shield
+              With Evolve Shield
             </button>
           </div>
 
@@ -71,7 +71,7 @@ export function FocusShieldShowcase() {
               href="#download"
               className="site-primary-btn inline-flex min-h-[48px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-sm font-semibold transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-110 sm:w-auto touch-manipulation"
             >
-              <span>Install FocusOS v1.0</span>
+              <span>Install Evolve v1.0</span>
               <ArrowDown className="h-4 w-4" aria-hidden="true" />
             </a>
             <span className="text-xs text-[#7c89a1]">
@@ -107,7 +107,7 @@ export function FocusShieldShowcase() {
               </span>
               <div>
                 <p className="font-display text-sm font-bold text-[#f4f7fb]">
-                  {shieldActive ? 'FocusOS Shield Active' : 'Unprotected Phone State'}
+                  {shieldActive ? 'Evolve Shield Active' : 'Unprotected Phone State'}
                 </p>
                 <p className="text-[11px] text-[#8d9cb8]">
                   {shieldActive
@@ -193,7 +193,7 @@ export function FocusShieldShowcase() {
                   <div className="flex items-center justify-between pt-2 text-[11px] text-[#8d9cb8]">
                     <span className="flex items-center gap-1.5">
                       <BellOff className="h-3.5 w-3.5 text-[#8d9cb8]" aria-hidden="true" />
-                      <span>Tap &ldquo;With FocusOS Shield&rdquo; to lock distractions out.</span>
+                      <span>Tap &ldquo;With Evolve Shield&rdquo; to lock distractions out.</span>
                     </span>
                   </div>
                 </motion.div>

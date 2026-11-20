@@ -12,6 +12,7 @@ import { InteractiveDemoSection } from './components/InteractiveDemoSection';
 import { HowItWorks } from './components/HowItWorks';
 import { ProgressSection } from './components/ProgressSection';
 import { FocusShieldShowcase } from './components/FocusShieldShowcase';
+import { PermissionsSection } from './components/PermissionsSection';
 import { DownloadSection } from './components/DownloadSection';
 import { UpcomingReleaseSection } from './components/UpcomingReleaseSection';
 import { FaqSection } from './components/FaqSection';
@@ -363,6 +364,7 @@ export default function App() {
           <HowItWorks />
           <ProgressSection />
           <FocusShieldShowcase />
+          <PermissionsSection />
           <DownloadSection />
           <UpcomingReleaseSection />
           <FaqSection />

@@ -6,22 +6,27 @@ const FAQS = [
   {
     question: 'Do you collect or sell my data?',
     answer:
-      'No. We never sell your data — not now, not ever. FocusOS has no ads, no analytics, and no accounts. Your focus history, settings, app groups, and timetable stay on your phone.',
+      'No. We never sell your data — not now, not ever. Evolve has no ads, no analytics, and no accounts. Your focus history, settings, app groups, and timetable stay on your phone.',
   },
   {
-    question: 'Is FocusOS available for Android?',
+    question: 'Is Evolve available for Android?',
     answer:
       'Yes. This website is prepared for the Android APK build supplied with it.',
   },
   {
-    question: 'Can I customize the look and feel of FocusOS?',
+    question: 'Why does Evolve ask for multiple Android permissions?',
     answer:
-      'Yes. FocusOS includes 8 built-in themes (iOS Blue, Violet, Blue, Sage, Ocean, Forest, Cloud Dancer 2026, and Mocha Mousse) along with toggles for glass effects, vibrant colour, and motivational quotes. Try them live in the Demo tab above.',
+      'Android sandboxes every app, so blocking distractions needs separate toggles: Usage Access detects blocked apps, Display Over Other Apps shows the shield screen, Optional Accessibility guards Stricter Mode, Notifications & Battery exemption keep your timer alive on One UI/MIUI/Poco/Moto, and Exact Alarms start Study Plan blocks. Open the Permissions tab in the navigation bar for full details on each toggle.',
+  },
+  {
+    question: 'Can I customize the look and feel of Evolve?',
+    answer:
+      'Yes. Evolve includes 8 built-in themes (iOS Blue, Violet, Blue, Sage, Ocean, Forest, Cloud Dancer 2026, and Mocha Mousse) along with toggles for glass effects, vibrant colour, and motivational quotes. Try them live in the Demo tab above.',
   },
   {
     question: 'Can I study with friends?',
     answer:
-      'FocusOS includes Rooms, where you can create a room or join one using a room code. Room features need a working server connection.',
+      'Evolve includes Rooms, where you can create a room or join one using a room code. Room features need a working server connection.',
   },
   {
     question: 'Is this the final Play Store release?',

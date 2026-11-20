@@ -776,7 +776,7 @@ async function startHttpServer() {
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({
       status: 'ok',
-      service: 'focusos-web',
+      service: 'evolve-web',
       uptimeSeconds: Math.round(process.uptime()),
       workerPid: process.pid,
       workerCount,
@@ -827,13 +827,19 @@ async function startHttpServer() {
   // Pre-install APK integrity metadata & SHA-256 checksum endpoint
   app.get('/api/apk-info', pageRateLimiter, async (_req, res) => {
     try {
-      const info = await getApkDigestInfo('/FocusOS-debug.apk');
+      let info = await getApkDigestInfo('/Evolve-debug.apk');
+      if (!info.available) {
+        info = await getApkDigestInfo('/FocusOS-debug.apk');
+      }
+      if (!info.available) {
+        info = { ...info, fileName: 'Evolve-debug.apk' };
+      }
       res.setHeader('Cache-Control', 'public, max-age=120');
       res.status(200).json(info);
     } catch {
       res.status(200).json({
         available: false,
-        fileName: 'FocusOS-debug.apk',
+        fileName: 'Evolve-debug.apk',
         sizeBytes: 0,
         sha256: null,
       });
@@ -1124,11 +1130,11 @@ async function startHttpServer() {
     const userHandle = toBase64Url(crypto.createHash('sha256').update('focusos-developer-admin').digest().subarray(0, 16));
 
     res.status(200).json({
-      rp: { name: 'FocusOS Developer Admin', id: rpId },
+      rp: { name: 'Evolve Developer Admin', id: rpId },
       user: {
         id: userHandle,
         name: 'phantomstrange',
-        displayName: 'Phantomstrange (FocusOS Admin)',
+        displayName: 'Phantomstrange (Evolve Admin)',
       },
       challenge,
       challengeToken,
@@ -1376,7 +1382,7 @@ async function startHttpServer() {
   });
 
   // APK & split-part download handler (works in both dev and production)
-  app.all(/^\/(FocusOS[^/]*\.apk|downloads\/[^/]+)$/i, downloadRateLimiter, async (req, res, next) => {
+  app.all(/^\/((Evolve|FocusOS)[^/]*\.apk|downloads\/[^/]+)$/i, downloadRateLimiter, async (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.status(405).end();
       return;

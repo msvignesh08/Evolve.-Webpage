@@ -47,7 +47,7 @@ const UPCOMING_MODULES: UpcomingModule[] = [
     index: '04',
     title: 'Unrevealed In-App Feature Drops',
     subtitle: 'Random encrypted rewards & hidden capabilities in v2',
-    hint: 'Mystery drops and unannounced FocusOS features stay sealed in the lab until the next major release wave.',
+    hint: 'Mystery drops and unannounced Evolve features stay sealed in the lab until the next major release wave.',
     icon: ShieldCheck,
     variant: 'mystery-drop',
   },
@@ -166,7 +166,7 @@ export function UpcomingReleaseSection() {
               Ready today. <span className="highlight-text">Huge drops next.</span>
             </h2>
             <p className="mt-3.5 text-[15px] leading-relaxed text-[#9ba8bf] sm:mt-4 sm:text-base">
-              This is v1.0 of FocusOS — upcoming updates bring developer subscription gifts, QR code room joining, fresh timer skins, Room tab upgrades, and unrevealed in-app surprises.
+              This is v1.0 of Evolve — upcoming updates bring developer subscription gifts, QR code room joining, fresh timer skins, Room tab upgrades, and unrevealed in-app surprises.
             </p>
           </div>
 

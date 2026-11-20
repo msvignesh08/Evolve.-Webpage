@@ -1,16 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="focusRing" x1="12" y1="12" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#60a5fa" />
-      <stop offset="100%" stop-color="#2563eb" />
+    <linearGradient id="evolveBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1b2e6e" />
+      <stop offset="52%" stop-color="#0b1222" />
+      <stop offset="100%" stop-color="#072e26" />
     </linearGradient>
-    <radialGradient id="focusGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#0b1120" stop-opacity="0" />
+    <linearGradient id="evolveArc" x1="46" y1="10" x2="14" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="48%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#7cb3ff" />
+    </linearGradient>
+    <radialGradient id="evolveGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.24" />
+      <stop offset="100%" stop-color="#0b1222" stop-opacity="0" />
     </radialGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#0b1120" />
-  <circle cx="32" cy="32" r="24" fill="url(#focusGlow)" />
-  <circle cx="32" cy="32" r="17" stroke="url(#focusRing)" stroke-width="5.6" />
-  <circle cx="32" cy="32" r="4.6" fill="#f8fafc" />
+  <rect x="1" y="1" width="62" height="62" rx="16" fill="url(#evolveBg)" stroke="rgba(255,255,255,0.25)" stroke-width="2" />
+  <circle cx="32" cy="32" r="24" fill="url(#evolveGlow)" />
+  <circle cx="32" cy="32" r="17" stroke="rgba(148,163,184,0.22)" stroke-width="5.6" />
+  <circle
+    cx="32"
+    cy="32"
+    r="17"
+    stroke="url(#evolveArc)"
+    stroke-width="5.6"
+    stroke-linecap="round"
+    stroke-dasharray="80.11 106.81"
+    transform="rotate(-90 32 32)"
+  />
+  <circle cx="32" cy="32" r="5.1" fill="#f4f7fb" />
 </svg>

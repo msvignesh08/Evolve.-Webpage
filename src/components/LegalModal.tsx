@@ -108,7 +108,7 @@ export function LegalModal({
                   Legal, Disclaimers &amp; Open Source Licenses
                 </h2>
                 <p className="mt-0.5 text-xs text-[#8d9cb8]">
-                  Transparency, third-party attributions, and terms of use for FocusOS.
+                  Transparency, third-party attributions, and terms of use for Evolve.
                 </p>
               </div>
               <button
@@ -164,11 +164,11 @@ export function LegalModal({
                       1. Personal Productivity Tool — No Guarantee
                     </h3>
                     <p className="mt-1">
-                      FocusOS is an independent personal productivity and study aid provided for
+                      Evolve is an independent personal productivity and study aid provided for
                       voluntary self-management. It cannot permanently lock your device. Operating
                       system updates, manufacturer battery/task managers, Safe Mode, device
                       restarts, or system settings may pause or stop active sessions. Do not rely
-                      on FocusOS for safety-critical, medical, financial, or emergency purposes.
+                      on Evolve for safety-critical, medical, financial, or emergency purposes.
                     </p>
                   </section>
 
@@ -208,7 +208,7 @@ export function LegalModal({
                       special, consequential, or punitive damages—including missed calls, missed
                       notifications, lost messages, data loss, academic/work delays, or device
                       interruptions—arising out of or related to your use of or inability to use
-                      this website or FocusOS.
+                      this website or Evolve.
                     </p>
                   </section>
 
@@ -248,7 +248,7 @@ export function LegalModal({
                       We never sell your data. Not now, not ever.
                     </p>
                     <p className="mt-1 text-xs text-[#c7d6ef]">
-                      FocusOS has no ads, no analytics trackers, no ad cookies, and no user
+                      Evolve has no ads, no analytics trackers, no ad cookies, and no user
                       accounts.
                     </p>
                   </div>
@@ -258,7 +258,7 @@ export function LegalModal({
                       On-Device Storage
                     </h3>
                     <p className="mt-1">
-                      In the FocusOS Android app, your focus history, settings, app groups, and
+                      In the Evolve Android app, your focus history, settings, app groups, and
                       study timetable are stored locally on your phone. This landing website does
                       not store personal profiles or track your browsing across sites.
                     </p>
@@ -287,7 +287,7 @@ export function LegalModal({
                       browser fetches those font files, Google receives standard HTTP request
                       metadata (such as IP address and browser user-agent) subject to Google&apos;s
                       privacy policy. No advertising cookies or analytics scripts are loaded by
-                      FocusOS.
+                      Evolve.
                     </p>
                   </section>
                 </div>
@@ -300,7 +300,7 @@ export function LegalModal({
                       Zero advertising or analytics cookies
                     </p>
                     <p className="mt-1 text-xs text-[#c7d6ef]">
-                      FocusOS does not set third-party advertising, cross-site tracking, or
+                      Evolve does not set third-party advertising, cross-site tracking, or
                       behavioural analytics cookies. We never sell your data. Not now, not ever.
                     </p>
                   </div>

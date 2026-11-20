@@ -65,7 +65,7 @@ export function InteractiveDemoSection({
               Interactive App Demo
             </p>
             <h2 className="text-balance font-display text-[clamp(1.85rem,3.6vw,3rem)] font-bold leading-[1.12] tracking-[-0.03em] text-[#f4f7fb]">
-              Try FocusOS before you install.
+              Try Evolve before you install.
             </h2>
             <p className="mt-3.5 text-[15px] leading-relaxed text-[#9ba8bf] sm:mt-4 sm:text-base">
               Explore every screen of the Android app — switch between the 8 themes, toggle glass and vibrant UI modes, test app allowlists, and run a focus session.
@@ -90,7 +90,7 @@ export function InteractiveDemoSection({
             </span>
             <div>
               <h3 className="font-display text-base font-bold text-[#f4f7fb]">
-                Experience FocusOS 1:1 on your phone
+                Experience Evolve 1:1 on your phone
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-[#9ba8bf]">
                 Launch the demo as a full-screen edge-to-edge app page with zero website borders.
@@ -225,7 +225,7 @@ export function InteractiveDemoSection({
                 Quick scenarios to test
               </h3>
               <p className="mt-1 text-xs text-[#8d9cb8]">
-                Jump straight to key FocusOS screens (opens full-screen on mobile).
+                Jump straight to key Evolve screens (opens full-screen on mobile).
               </p>
 
               <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
