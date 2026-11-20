@@ -12,6 +12,7 @@ import type { NextFunction, Request, Response } from 'express';
 import {
   createChallengeToken,
   createPasskeyStore,
+  encodePasskeysForEnv,
   issueAdminSessionToken,
   toBase64Url,
   verifyAdminSessionToken,
@@ -28,12 +29,16 @@ const port = Number(process.env.PORT || 3000);
 
 // Ensure primary & all forked cluster workers share an identical HMAC secret
 if (!process.env.FOCUSOS_INTERNAL_HMAC_SECRET) {
+  const seed =
+    process.env.ADMIN_PASSKEY?.trim() ||
+    process.env.ADMIN_PASSKEYS?.trim() ||
+    '';
   process.env.FOCUSOS_INTERNAL_HMAC_SECRET =
     process.env.ADMIN_SESSION_SECRET?.trim() ||
-    (process.env.ADMIN_PASSKEY?.trim()
+    (seed
       ? crypto
           .createHash('sha256')
-          .update(`focusos-session:${process.env.ADMIN_PASSKEY.trim()}`)
+          .update(`focusos-session:${seed}`)
           .digest('hex')
       : crypto.randomBytes(32).toString('hex'));
 }
@@ -614,7 +619,10 @@ function isGiftExpired(gift: DeviceGift, nowMs = Date.now()): boolean {
 const PASSKEYS_STORE_PATH = process.env.PASSKEYS_STORE_PATH?.trim()
   ? path.resolve(process.env.PASSKEYS_STORE_PATH.trim())
   : path.join(path.dirname(GIFTS_STORE_PATH), 'passkeys.json');
-const passkeyStore = createPasskeyStore(PASSKEYS_STORE_PATH);
+const passkeyStore = createPasskeyStore(
+  PASSKEYS_STORE_PATH,
+  () => process.env.ADMIN_PASSKEYS,
+);
 
 function getSessionHmacSecret(): string {
   return process.env.FOCUSOS_INTERNAL_HMAC_SECRET || 'focusos-dev-hmac-fallback';
@@ -1087,15 +1095,21 @@ async function startHttpServer() {
   });
 
   app.get('/api/admin/passkeys', adminRateLimiter, requireAdminAuth, (_req, res) => {
-    const list = passkeyStore.read().map((pk) => ({
+    const listWithStatus = passkeyStore.readWithStatus();
+    const list = listWithStatus.map((pk) => ({
       id: pk.id,
       label: pk.label,
       alg: pk.alg,
       transports: pk.transports,
       createdAt: pk.createdAt,
       lastUsedAt: pk.lastUsedAt,
+      pinnedInEnv: pk.pinnedInEnv,
     }));
-    res.status(200).json({ passkeys: list });
+    res.status(200).json({
+      passkeys: list,
+      envExportValue: encodePasskeysForEnv(listWithStatus),
+      allPinned: listWithStatus.length > 0 && listWithStatus.every((pk) => pk.pinnedInEnv),
+    });
   });
 
   app.post('/api/admin/passkey/register-options', adminRateLimiter, requireAdminAuth, (req, res) => {
@@ -1184,13 +1198,16 @@ async function startHttpServer() {
         });
 
         const existing = passkeyStore.read().filter((pk) => pk.id !== stored.id);
-        passkeyStore.write([...existing, stored]);
+        const merged = [...existing, stored];
+        passkeyStore.write(merged);
+        const statusMatch = passkeyStore.readWithStatus().find((pk) => pk.id === stored.id);
 
         // Upgrade current session into a short-lived passkey-bound session token as well
         const sessionToken = issueAdminSessionToken(stored.id, getSessionHmacSecret());
         res.status(201).json({
           ok: true,
           sessionToken,
+          envExportValue: encodePasskeysForEnv(merged),
           passkey: {
             id: stored.id,
             label: stored.label,
@@ -1198,6 +1215,7 @@ async function startHttpServer() {
             transports: stored.transports,
             createdAt: stored.createdAt,
             lastUsedAt: stored.lastUsedAt,
+            pinnedInEnv: Boolean(statusMatch?.pinnedInEnv),
           },
         });
       } catch (err) {
@@ -1212,14 +1230,27 @@ async function startHttpServer() {
   app.delete('/api/admin/passkeys/:id', adminRateLimiter, requireAdminAuth, (req, res) => {
     const rawId = req.params.id;
     const id = typeof rawId === 'string' ? rawId.trim() : '';
-    const existing = passkeyStore.read();
-    const nextList = existing.filter((pk) => pk.id !== id);
-    if (nextList.length === existing.length) {
-      res.status(404).json({ error: 'NOT_FOUND' });
+    const existingWithStatus = passkeyStore.readWithStatus();
+    const target = existingWithStatus.find((pk) => pk.id === id);
+    if (!target) {
+      res.status(404).json({ error: 'NOT_FOUND', message: 'Passkey not found.' });
       return;
     }
+    if (target.pinnedInEnv) {
+      res.status(409).json({
+        error: 'PINNED_IN_ENV',
+        message:
+          'This passkey is pinned in Render Environment Variable ADMIN_PASSKEYS. Update or remove ADMIN_PASSKEYS in Render to revoke it permanently.',
+      });
+      return;
+    }
+    const nextList = existingWithStatus.filter((pk) => pk.id !== id);
     passkeyStore.write(nextList);
-    res.status(200).json({ ok: true, deletedId: id });
+    res.status(200).json({
+      ok: true,
+      deletedId: id,
+      envExportValue: encodePasskeysForEnv(nextList),
+    });
   });
 
   app.get('/api/admin/gifts', adminRateLimiter, requireAdminAuth, (req, res) => {

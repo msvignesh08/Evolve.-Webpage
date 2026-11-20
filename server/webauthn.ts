@@ -452,40 +452,113 @@ export function verifyAuthenticationResponse(params: {
 }
 
 // ---------------------------------------------------------------------------
-// Cluster-Safe Persistent Passkey Store (data/passkeys.json)
+// Cluster-Safe + Stateless Env-Pinned Passkey Store
 // ---------------------------------------------------------------------------
-export function createPasskeyStore(storePath: string) {
-  let cachedList: StoredPasskey[] = [];
+function isValidStoredPasskey(pk: unknown): pk is StoredPasskey {
+  if (!pk || typeof pk !== 'object') return false;
+  const candidate = pk as Partial<StoredPasskey>;
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.length > 0 &&
+    Boolean(candidate.publicKeyJwk) &&
+    typeof candidate.publicKeyJwk === 'object' &&
+    (candidate.alg === -7 || candidate.alg === -257)
+  );
+}
+
+export function parseEnvPasskeys(rawEnv: string | undefined): StoredPasskey[] {
+  const trimmed = rawEnv?.trim();
+  if (!trimmed) return [];
+  try {
+    const jsonText = trimmed.startsWith('b64:')
+      ? Buffer.from(trimmed.slice(4), 'base64url').toString('utf8')
+      : trimmed;
+    const parsed = JSON.parse(jsonText);
+    const list = Array.isArray(parsed) ? parsed : [parsed];
+    return list.filter(isValidStoredPasskey).map((pk) => ({
+      id: pk.id,
+      label: typeof pk.label === 'string' && pk.label.trim() ? pk.label.trim() : 'Pinned Passkey',
+      alg: pk.alg,
+      publicKeyJwk: pk.publicKeyJwk,
+      signCount: typeof pk.signCount === 'number' && Number.isFinite(pk.signCount) ? pk.signCount : 0,
+      transports: Array.isArray(pk.transports) ? pk.transports : [],
+      createdAt: typeof pk.createdAt === 'string' ? pk.createdAt : new Date(0).toISOString(),
+      lastUsedAt: typeof pk.lastUsedAt === 'string' ? pk.lastUsedAt : null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export function encodePasskeysForEnv(passkeys: StoredPasskey[]): string {
+  if (passkeys.length === 0) return '';
+  const compact = passkeys.map((pk) => ({
+    id: pk.id,
+    label: pk.label,
+    alg: pk.alg,
+    publicKeyJwk: pk.publicKeyJwk,
+    transports: pk.transports,
+    createdAt: pk.createdAt,
+  }));
+  return `b64:${Buffer.from(JSON.stringify(compact), 'utf8').toString('base64url')}`;
+}
+
+export function createPasskeyStore(storePath: string, getEnvRaw: () => string | undefined = () => undefined) {
+  let cachedDiskList: StoredPasskey[] = [];
   let cachedMtimeMs = -1;
 
-  const read = (): StoredPasskey[] => {
+  const readDisk = (): StoredPasskey[] => {
     try {
       const stat = fs.statSync(storePath);
       if (stat.mtimeMs === cachedMtimeMs) {
-        return cachedList;
+        return cachedDiskList;
       }
       const raw = fs.readFileSync(storePath, 'utf8');
       const parsed = JSON.parse(raw);
-      cachedList = Array.isArray(parsed)
-        ? parsed.filter(
-            (pk): pk is StoredPasskey =>
-              Boolean(pk) &&
-              typeof pk.id === 'string' &&
-              Boolean(pk.publicKeyJwk) &&
-              typeof pk.publicKeyJwk === 'object',
-          )
-        : [];
+      cachedDiskList = Array.isArray(parsed) ? parsed.filter(isValidStoredPasskey) : [];
       cachedMtimeMs = stat.mtimeMs;
-      return cachedList;
+      return cachedDiskList;
     } catch (err) {
       if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
-        cachedList = [];
+        cachedDiskList = [];
         cachedMtimeMs = 0;
-        return cachedList;
+        return cachedDiskList;
       }
-      return cachedList;
+      return cachedDiskList;
     }
   };
+
+  const readWithStatus = (): Array<StoredPasskey & { pinnedInEnv: boolean }> => {
+    const envKeys = parseEnvPasskeys(getEnvRaw());
+    const diskKeys = readDisk();
+    const diskById = new Map(diskKeys.map((k) => [k.id, k]));
+    const envIds = new Set(envKeys.map((k) => k.id));
+
+    const merged: Array<StoredPasskey & { pinnedInEnv: boolean }> = [];
+
+    for (const envPk of envKeys) {
+      const diskOverride = diskById.get(envPk.id);
+      merged.push({
+        ...envPk,
+        signCount: diskOverride ? Math.max(envPk.signCount, diskOverride.signCount) : envPk.signCount,
+        lastUsedAt: diskOverride?.lastUsedAt ?? envPk.lastUsedAt,
+        pinnedInEnv: true,
+      });
+    }
+
+    for (const diskPk of diskKeys) {
+      if (!envIds.has(diskPk.id)) {
+        merged.push({
+          ...diskPk,
+          pinnedInEnv: false,
+        });
+      }
+    }
+
+    return merged;
+  };
+
+  const read = (): StoredPasskey[] => readWithStatus();
 
   const write = (passkeys: StoredPasskey[]) => {
     const dir = path.dirname(storePath);
@@ -499,8 +572,9 @@ export function createPasskeyStore(storePath: string) {
     } catch {
       cachedMtimeMs = Date.now();
     }
-    cachedList = bounded;
+    cachedDiskList = bounded;
   };
 
-  return { read, write };
+  return { read, readWithStatus, write };
 }
+

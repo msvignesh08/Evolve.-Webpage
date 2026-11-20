@@ -67,6 +67,7 @@ interface EnrolledPasskeyInfo {
   transports: string[];
   createdAt: string;
   lastUsedAt: string | null;
+  pinnedInEnv?: boolean;
 }
 
 interface AdminGiftPageProps {
@@ -146,6 +147,9 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
 
   // Hardware Passkeys (WebAuthn) manager state
   const [enrolledPasskeys, setEnrolledPasskeys] = useState<EnrolledPasskeyInfo[]>([]);
+  const [envExportValue, setEnvExportValue] = useState('');
+  const [allPinned, setAllPinned] = useState(false);
+  const [showEnvExport, setShowEnvExport] = useState(false);
   const [newPasskeyLabel, setNewPasskeyLabel] = useState('My Phone / Laptop');
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyNotice, setPasskeyNotice] = useState<{
@@ -209,8 +213,14 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
         cache: 'no-store',
       });
       if (!res.ok) return;
-      const data = (await res.json()) as { passkeys: EnrolledPasskeyInfo[] };
+      const data = (await res.json()) as {
+        passkeys: EnrolledPasskeyInfo[];
+        envExportValue?: string;
+        allPinned?: boolean;
+      };
       setEnrolledPasskeys(data.passkeys ?? []);
+      setEnvExportValue(data.envExportValue ?? '');
+      setAllPinned(Boolean(data.allPinned));
     } catch {
       // Ignore transient glitch
     }
@@ -376,6 +386,7 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
       const verData = (await verRes.json().catch(() => ({}))) as {
         ok?: boolean;
         sessionToken?: string;
+        envExportValue?: string;
         passkey?: EnrolledPasskeyInfo;
         message?: string;
       };
@@ -387,9 +398,14 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
       if (verData.sessionToken) {
         setActivePasskey(verData.sessionToken);
       }
+      if (verData.envExportValue) {
+        setEnvExportValue(verData.envExportValue);
+        setAllPinned(false);
+        setShowEnvExport(true);
+      }
       setPasskeyNotice({
         type: 'ok',
-        text: `Passkey "${verData.passkey.label}" enrolled! Future logins only need your biometric prompt.`,
+        text: `Passkey "${verData.passkey.label}" enrolled! Pin ADMIN_PASSKEYS in Render below so it survives sleeps & redeploys.`,
       });
       setStatus((prev) =>
         prev ? { ...prev, passkeyCount: (prev.passkeyCount ?? 0) + 1 } : prev,
@@ -409,21 +425,31 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
 
   const handleDeletePasskey = async (id: string) => {
     if (!activePasskey) return;
+    setPasskeyNotice(null);
     try {
       const res = await fetch(`/api/admin/passkeys/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${activePasskey}` },
       });
-      if (res.ok) {
-        await loadPasskeys(activePasskey);
-        setStatus((prev) =>
-          prev
-            ? { ...prev, passkeyCount: Math.max(0, (prev.passkeyCount ?? 1) - 1) }
-            : prev,
-        );
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        setPasskeyNotice({
+          type: 'err',
+          text: data.message || 'Could not revoke this passkey.',
+        });
+        return;
       }
+      await loadPasskeys(activePasskey);
+      setStatus((prev) =>
+        prev
+          ? { ...prev, passkeyCount: Math.max(0, (prev.passkeyCount ?? 1) - 1) }
+          : prev,
+      );
     } catch {
-      // ignore
+      setPasskeyNotice({
+        type: 'err',
+        text: 'Network error while revoking passkey.',
+      });
     }
   };
 
@@ -1261,12 +1287,26 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
                             <ShieldCheck
-                              className="h-4 w-4 shrink-0 text-[#34d399]"
+                              className={`h-4 w-4 shrink-0 ${
+                                pk.pinnedInEnv ? 'text-[#34d399]' : 'text-amber-300'
+                              }`}
                               aria-hidden="true"
                             />
                             <div className="min-w-0">
-                              <div className="truncate text-xs font-semibold text-[#f4f7fb]">
-                                {pk.label}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="truncate text-xs font-semibold text-[#f4f7fb]">
+                                  {pk.label}
+                                </span>
+                                <span
+                                  className={`font-mono text-[10px] font-semibold ${
+                                    pk.pinnedInEnv ? 'text-[#34d399]' : 'text-amber-300'
+                                  }`}
+                                >
+                                  ·{' '}
+                                  {pk.pinnedInEnv
+                                    ? 'Pinned in Env · Survives restarts'
+                                    : 'Temporary · Container disk only'}
+                                </span>
                               </div>
                               <div className="truncate font-mono text-[10px] text-[#8d9cb8]">
                                 {pk.alg === -7 ? 'ES256 (P-256)' : 'RS256'} · Added{' '}
@@ -1287,6 +1327,67 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                           </button>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {envExportValue && (!allPinned || showEnvExport) && (
+                    <div
+                      className={`mt-4 space-y-2.5 rounded-2xl border p-4 ${
+                        allPinned
+                          ? 'border-[#34d399]/30 bg-[#10b981]/10'
+                          : 'border-amber-400/35 bg-amber-500/10'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-semibold text-[#f4f7fb]">
+                          {allPinned
+                            ? 'Pinned Render Backup (ADMIN_PASSKEYS)'
+                            : 'Save to Render so Passkey never resets (ADMIN_PASSKEYS)'}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyText('admin_passkeys_env', envExportValue)}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-black/25 px-3 py-1.5 text-[11px] font-semibold text-white hover:border-[#60a5fa]/50 touch-manipulation"
+                        >
+                          {copiedKey === 'admin_passkeys_env' ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-[#34d399]" aria-hidden="true" />
+                              <span className="text-[#34d399]">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                              <span>Copy ADMIN_PASSKEYS</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-[#cbd5e8]">
+                        Render Free Tier wipes container files whenever the server sleeps or
+                        redeploys. Paste this public-key string into Render Dashboard →{' '}
+                        <strong className="text-white">Environment</strong> →{' '}
+                        <code className="allow-select font-mono text-[#93c5fd]">
+                          ADMIN_PASSKEYS
+                        </code>{' '}
+                        so your enrolled passkeys stay active permanently.
+                      </p>
+                      <pre className="allow-select max-h-24 overflow-x-auto break-all whitespace-pre-wrap rounded-xl bg-[#070a10]/85 px-3 py-2 font-mono text-[10px] leading-relaxed text-[#93c5fd]">
+                        {envExportValue}
+                      </pre>
+                    </div>
+                  )}
+
+                  {envExportValue && allPinned && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowEnvExport((v) => !v)}
+                        className="text-[11px] font-medium text-[#8d9cb8] hover:text-[#cbd5e8] touch-manipulation"
+                      >
+                        {showEnvExport
+                          ? 'Hide ADMIN_PASSKEYS string'
+                          : 'View / Copy ADMIN_PASSKEYS string'}
+                      </button>
                     </div>
                   )}
                 </section>
