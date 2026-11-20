@@ -469,25 +469,44 @@ function isValidStoredPasskey(pk: unknown): pk is StoredPasskey {
 export function parseEnvPasskeys(rawEnv: string | undefined): StoredPasskey[] {
   const trimmed = rawEnv?.trim();
   if (!trimmed) return [];
-  try {
-    const jsonText = trimmed.startsWith('b64:')
-      ? Buffer.from(trimmed.slice(4), 'base64url').toString('utf8')
-      : trimmed;
-    const parsed = JSON.parse(jsonText);
-    const list = Array.isArray(parsed) ? parsed : [parsed];
-    return list.filter(isValidStoredPasskey).map((pk) => ({
-      id: pk.id,
-      label: typeof pk.label === 'string' && pk.label.trim() ? pk.label.trim() : 'Pinned Passkey',
-      alg: pk.alg,
-      publicKeyJwk: pk.publicKeyJwk,
-      signCount: typeof pk.signCount === 'number' && Number.isFinite(pk.signCount) ? pk.signCount : 0,
-      transports: Array.isArray(pk.transports) ? pk.transports : [],
-      createdAt: typeof pk.createdAt === 'string' ? pk.createdAt : new Date(0).toISOString(),
-      lastUsedAt: typeof pk.lastUsedAt === 'string' ? pk.lastUsedAt : null,
-    }));
-  } catch {
-    return [];
+
+  const decodeSingleChunk = (chunk: string): StoredPasskey[] => {
+    try {
+      const jsonText = chunk.startsWith('b64:')
+        ? Buffer.from(chunk.slice(4), 'base64url').toString('utf8')
+        : chunk;
+      const parsed = JSON.parse(jsonText);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      return list.filter(isValidStoredPasskey).map((pk) => ({
+        id: pk.id,
+        label: typeof pk.label === 'string' && pk.label.trim() ? pk.label.trim() : 'Pinned Passkey',
+        alg: pk.alg,
+        publicKeyJwk: pk.publicKeyJwk,
+        signCount: typeof pk.signCount === 'number' && Number.isFinite(pk.signCount) ? pk.signCount : 0,
+        transports: Array.isArray(pk.transports) ? pk.transports : [],
+        createdAt: typeof pk.createdAt === 'string' ? pk.createdAt : new Date(0).toISOString(),
+        lastUsedAt: typeof pk.lastUsedAt === 'string' ? pk.lastUsedAt : null,
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  // Support either a single combined b64:/JSON value or multiple comma/whitespace-separated b64: tokens
+  const chunks = trimmed.startsWith('b64:')
+    ? trimmed
+        .split(/[\s,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [trimmed];
+
+  const byId = new Map<string, StoredPasskey>();
+  for (const chunk of chunks) {
+    for (const pk of decodeSingleChunk(chunk)) {
+      byId.set(pk.id, pk);
+    }
   }
+  return Array.from(byId.values());
 }
 
 export function encodePasskeysForEnv(passkeys: StoredPasskey[]): string {

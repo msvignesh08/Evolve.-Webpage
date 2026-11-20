@@ -1341,8 +1341,8 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="text-xs font-semibold text-[#f4f7fb]">
                           {allPinned
-                            ? 'Pinned Render Backup (ADMIN_PASSKEYS)'
-                            : 'Save to Render so Passkey never resets (ADMIN_PASSKEYS)'}
+                            ? `Pinned Render Backup (ADMIN_PASSKEYS · ${enrolledPasskeys.length} ${enrolledPasskeys.length === 1 ? 'device' : 'devices'})`
+                            : `Save to Render so ${enrolledPasskeys.length === 1 ? 'Passkey never resets' : `all ${enrolledPasskeys.length} Passkeys never reset`} (ADMIN_PASSKEYS)`}
                         </div>
                         <button
                           type="button"
@@ -1364,12 +1364,17 @@ export function AdminGiftPage({ onBack, siteTheme, onChangeSiteTheme }: AdminGif
                       </div>
                       <p className="text-[11px] leading-relaxed text-[#cbd5e8]">
                         Render Free Tier wipes container files whenever the server sleeps or
-                        redeploys. Paste this public-key string into Render Dashboard →{' '}
+                        redeploys. This single string already bundles{' '}
+                        <strong className="text-white">
+                          all {enrolledPasskeys.length} enrolled{' '}
+                          {enrolledPasskeys.length === 1 ? 'device' : 'devices'}
+                        </strong>
+                        —paste or replace it in Render Dashboard →{' '}
                         <strong className="text-white">Environment</strong> →{' '}
                         <code className="allow-select font-mono text-[#93c5fd]">
                           ADMIN_PASSKEYS
-                        </code>{' '}
-                        so your enrolled passkeys stay active permanently.
+                        </code>
+                        .
                       </p>
                       <pre className="allow-select max-h-24 overflow-x-auto break-all whitespace-pre-wrap rounded-xl bg-[#070a10]/85 px-3 py-2 font-mono text-[10px] leading-relaxed text-[#93c5fd]">
                         {envExportValue}
