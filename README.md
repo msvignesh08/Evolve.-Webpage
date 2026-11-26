@@ -17,10 +17,10 @@ Every webpage source file and compiled frontend chunk is kept small (well under 
 If you add a large Android APK (`> 24 MB`) that exceeds GitHub's 25 MB web upload limit, split it into **19–24 MB parts** (default `20 MB`):
 
 ```bash
-npm run split:apk -- ./Evolve-debug.apk --size-mb=20
+npm run split:apk -- ./Evolve.apk --size-mb=20
 ```
 
-This creates `public/Evolve-debug.apk.part001`, `.part002`, ... plus a checksum manifest. Remove the unsplit original file before uploading to GitHub; the Express server automatically streams and reassembles the `.partNNN` chunks (including HTTP `HEAD` and byte-range resume) when visitors click **Download APK**.
+This creates `public/Evolve.apk.part001`, `.part002`, ... plus a checksum manifest. Remove the unsplit original file before uploading to GitHub; the Express server automatically streams and reassembles the `.partNNN` chunks (including HTTP `HEAD` and byte-range resume) when visitors click **Download APK**.
 
 Check that all repository files stay under 24 MB before committing/pushing:
 

@@ -143,8 +143,13 @@ function ModuleSkeletonPreview({ variant }: { variant: SkeletonVariant }) {
   );
 }
 
-export function UpcomingReleaseSection() {
+interface UpcomingReleaseSectionProps {
+  versionName?: string | null;
+}
+
+export function UpcomingReleaseSection({ versionName }: UpcomingReleaseSectionProps) {
   const [selectedId, setSelectedId] = useState<string>('dev-gifts');
+  const apkVersionLabel = versionName ? `v${versionName}` : 'v2.5.0';
 
   return (
     <section id="whats-next" className="py-12 sm:py-20">
@@ -174,7 +179,7 @@ export function UpcomingReleaseSection() {
             href="#download"
             className="glass-surface inline-flex min-h-[46px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-xs font-semibold text-[#f4f7fb] transition-all hover:border-[#60a5fa]/50 hover:brightness-110 touch-manipulation"
           >
-            <span>Install v1.0 APK now</span>
+            <span>Install {apkVersionLabel} APK now</span>
             <ArrowDown className="h-3.5 w-3.5 text-[#60a5fa]" aria-hidden="true" />
           </a>
         </motion.div>

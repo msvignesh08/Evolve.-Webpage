@@ -230,12 +230,12 @@ export function LegalModal({
 
                   <section>
                     <h3 className="font-display text-sm font-semibold text-[#f4f7fb]">
-                      6. Rooms &amp; External Servers
+                      6. Focus Rooms
                     </h3>
                     <p className="mt-1">
-                      Focus Rooms are optional and require connecting to a user-specified or hosted
-                      server. You are solely responsible for the nicknames, room codes, and server
-                      endpoints you choose to connect to.
+                      Focus Rooms are optional and connect using only a room join code. You are
+                      solely responsible for the room codes and optional display names you share
+                      while a room is active.
                     </p>
                   </section>
                 </div>
@@ -269,10 +269,10 @@ export function LegalModal({
                       Rooms Exception
                     </h3>
                     <p className="mt-1">
-                      Only if you choose to join or create a Focus Room, your chosen nickname,
-                      room code, and session status are transmitted to the Rooms server you connect
-                      to while the room is active. Hosting providers may retain standard technical
-                      infrastructure logs (such as IP addresses).
+                      Only if you choose to join or create a Focus Room using a join code, that
+                      room code and your active session status are relayed while the room is active.
+                      Hosting providers may retain standard technical infrastructure logs (such as
+                      IP addresses).
                     </p>
                   </section>
 

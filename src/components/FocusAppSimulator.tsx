@@ -125,6 +125,9 @@ export function FocusAppSimulator({
   const [studyBlocks, setStudyBlocks] = useState<StudyBlockEntry[]>(INITIAL_BLOCKS);
   const [newBlockAddedToast, setNewBlockAddedToast] = useState(false);
   const [joinedRoom, setJoinedRoom] = useState(false);
+  const [roomCodeInput, setRoomCodeInput] = useState('482-910');
+  const [activeRoomCode, setActiveRoomCode] = useState('482-910');
+  const [roomJoinError, setRoomJoinError] = useState<string | null>(null);
   const [copiedRoomCode, setCopiedRoomCode] = useState(false);
 
   // Trigger blocked popup from external quick-scenario button
@@ -810,40 +813,106 @@ export function FocusAppSimulator({
               </div>
             </motion.div>
           ) : activeTab === 'rooms' ? (
-            /* Rooms kept the same as requested */
             <motion.div
               key="rooms-tab"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.16 }}
-              className="flex flex-col gap-4 pb-2"
+              className="flex flex-col gap-3.5 pb-2"
             >
               <div>
                 <h3 className="font-display text-2xl font-bold text-[#f4f7fb]">Rooms</h3>
                 <p className="mt-1 text-xs leading-relaxed text-[#8d9cb8]">
-                  Focus with friends. Create or join a room with a code and start a shared focus session together.
+                  Focus with friends. Only a join code is required — no accounts or extra setup.
                 </p>
               </div>
 
+              {/* Code-only Instant Join Card */}
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-semibold tracking-wider text-[#9ba8bf] uppercase">
+                    Join with code
+                  </span>
+                  <span className="font-mono text-[10px] font-semibold text-[#34d399]">
+                    Code only
+                  </span>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (joinedRoom) {
+                      setJoinedRoom(false);
+                      setRoomJoinError(null);
+                      return;
+                    }
+                    const trimmed = roomCodeInput.trim();
+                    if (trimmed.length < 3) {
+                      setRoomJoinError('Enter a join code (at least 3 characters).');
+                      return;
+                    }
+                    setRoomJoinError(null);
+                    setActiveRoomCode(trimmed);
+                    setJoinedRoom(true);
+                  }}
+                  className="mt-2.5 flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={roomCodeInput}
+                    maxLength={12}
+                    disabled={joinedRoom}
+                    onChange={(e) => {
+                      setRoomCodeInput(e.target.value.toUpperCase());
+                      if (roomJoinError) setRoomJoinError(null);
+                    }}
+                    placeholder="e.g. 482-910"
+                    aria-label="Room join code"
+                    className="min-h-[42px] min-w-0 flex-1 rounded-xl border border-white/12 bg-black/30 px-3 font-mono text-sm font-semibold tracking-wider text-[#f4f7fb] placeholder:text-[#6b7890] focus:border-[#60a5fa] focus:outline-none disabled:opacity-60"
+                  />
+                  <button
+                    type="submit"
+                    className="min-h-[42px] shrink-0 rounded-xl px-4 text-xs font-bold touch-manipulation"
+                    style={{
+                      backgroundColor: activeTheme.accent,
+                      color: buttonTextColor,
+                    }}
+                  >
+                    {joinedRoom ? 'Leave' : 'Join'}
+                  </button>
+                </form>
+
+                {roomJoinError && (
+                  <p className="mt-2 text-[11px] text-amber-300">{roomJoinError}</p>
+                )}
+
+                <p className="mt-2 text-[11px] text-[#8d9cb8]">
+                  {joinedRoom
+                    ? `Connected to ${activeRoomCode} · 3 people focusing · 45m active`
+                    : 'No password or account needed — enter any code to preview.'}
+                </p>
+              </div>
+
+              {/* Share Your Join Code Card */}
               <div
-                className="rounded-3xl border p-5"
+                className="rounded-3xl border p-4"
                 style={{
                   borderColor: activeTheme.accentSoft,
                   backgroundColor: activeTheme.accentSoft,
                 }}
               >
                 <span className="text-[10px] font-semibold tracking-wider text-[#c4d0e6] uppercase">
-                  Shared study room
+                  Your room code
                 </span>
-                <div className="mt-2 flex items-center justify-between">
-                  <p className="font-mono text-3xl font-bold tracking-wider text-[#f4f7fb] tabular-nums">
+                <div className="mt-1.5 flex items-center justify-between">
+                  <p className="font-mono text-2xl font-bold tracking-wider text-[#f4f7fb] tabular-nums">
                     482-910
                   </p>
                   <button
                     type="button"
                     onClick={handleCopyRoomCode}
-                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-white/15 bg-black/25 px-3.5 text-xs font-semibold text-[#f4f7fb] touch-manipulation"
+                    className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-white/15 bg-black/25 px-3 text-xs font-semibold text-[#f4f7fb] touch-manipulation"
                   >
                     {copiedRoomCode ? (
                       <>
@@ -859,21 +928,8 @@ export function FocusAppSimulator({
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-[#c4d0e6]">
-                  {joinedRoom
-                    ? '3 people focusing · 45m session active'
-                    : 'Share this code with friends to start together.'}
+                  Share this code — friends only need the join code to start together.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setJoinedRoom((prev) => !prev)}
-                  className="mt-4 flex min-h-[46px] w-full items-center justify-center rounded-full text-sm font-bold touch-manipulation"
-                  style={{
-                    backgroundColor: activeTheme.accent,
-                    color: buttonTextColor,
-                  }}
-                >
-                  {joinedRoom ? 'Leave room preview' : 'Join room preview'}
-                </button>
               </div>
             </motion.div>
           ) : activeTab === 'plan' ? (

@@ -8,7 +8,7 @@
  *
  * Usage:
  *   npm run check:sizes
- *   npm run split:apk -- ./Evolve-debug.apk --size-mb=20
+ *   npm run split:apk -- ./Evolve.apk --size-mb=20
  */
 
 import crypto from 'node:crypto';

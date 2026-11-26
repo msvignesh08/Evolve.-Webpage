@@ -19,6 +19,11 @@ import {
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
 } from './server/webauthn.ts';
+import {
+  inspectApkMetadata,
+  type ApkFileEntrySummary,
+  type ParsedApkMetadata,
+} from './server/apkParser.ts';
 
 dotenv.config();
 
@@ -255,21 +260,27 @@ function createMultiPartRangeStream(
   return Readable.from(generateChunks());
 }
 
-interface CachedApkDigest {
-  cacheKey: string;
-  sha256: string;
-  sizeBytes: number;
-  fileName: string;
-}
-
-let cachedApkDigest: CachedApkDigest | null = null;
-
-async function getApkDigestInfo(requestedApkPath = '/FocusOS-debug.apk'): Promise<{
+interface ApkDigestInfo {
   available: boolean;
   fileName: string;
   sizeBytes: number;
   sha256: string | null;
-}> {
+  packageName: string | null;
+  versionName: string | null;
+  versionCode: number | null;
+  minAndroidLabel: string | null;
+  fileCount: number | null;
+  entries: ApkFileEntrySummary[] | null;
+}
+
+interface CachedApkDigest {
+  cacheKey: string;
+  info: ApkDigestInfo;
+}
+
+let cachedApkDigest: CachedApkDigest | null = null;
+
+async function getApkDigestInfo(requestedApkPath = '/Evolve.apk'): Promise<ApkDigestInfo> {
   const source = resolveBinaryOrParts(requestedApkPath);
   if (!source) {
     return {
@@ -277,6 +288,12 @@ async function getApkDigestInfo(requestedApkPath = '/FocusOS-debug.apk'): Promis
       fileName: path.basename(requestedApkPath),
       sizeBytes: 0,
       sha256: null,
+      packageName: null,
+      versionName: null,
+      versionCode: null,
+      minAndroidLabel: null,
+      fileCount: null,
+      entries: null,
     };
   }
 
@@ -292,13 +309,10 @@ async function getApkDigestInfo(requestedApkPath = '/FocusOS-debug.apk'): Promis
   const cacheKey = `${source.downloadName}:${source.totalSize}:${mtimes}`;
 
   if (cachedApkDigest && cachedApkDigest.cacheKey === cacheKey) {
-    return {
-      available: true,
-      fileName: cachedApkDigest.fileName,
-      sizeBytes: cachedApkDigest.sizeBytes,
-      sha256: cachedApkDigest.sha256,
-    };
+    return cachedApkDigest.info;
   }
+
+  let sha256: string | null = null;
 
   // Check if a verified .parts.json manifest already holds the SHA-256
   if (source.parts.length > 0) {
@@ -315,19 +329,7 @@ async function getApkDigestInfo(requestedApkPath = '/FocusOS-debug.apk'): Promis
           typeof manifest.sha256 === 'string' &&
           /^[a-f0-9]{64}$/i.test(manifest.sha256)
         ) {
-          const sha256 = manifest.sha256.toLowerCase();
-          cachedApkDigest = {
-            cacheKey,
-            sha256,
-            sizeBytes: source.totalSize,
-            fileName: source.downloadName,
-          };
-          return {
-            available: true,
-            fileName: source.downloadName,
-            sizeBytes: source.totalSize,
-            sha256,
-          };
+          sha256 = manifest.sha256.toLowerCase();
         }
       } catch {
         // Fall through to streaming SHA-256 calculation
@@ -335,26 +337,35 @@ async function getApkDigestInfo(requestedApkPath = '/FocusOS-debug.apk'): Promis
     }
   }
 
-  const hash = crypto.createHash('sha256');
-  const stream = createMultiPartRangeStream(source.parts, 0, source.totalSize - 1);
-  for await (const chunk of stream) {
-    hash.update(chunk);
+  if (!sha256) {
+    const hash = crypto.createHash('sha256');
+    const stream = createMultiPartRangeStream(source.parts, 0, source.totalSize - 1);
+    for await (const chunk of stream) {
+      hash.update(chunk);
+    }
+    sha256 = hash.digest('hex');
   }
-  const sha256 = hash.digest('hex');
 
-  cachedApkDigest = {
-    cacheKey,
-    sha256,
-    sizeBytes: source.totalSize,
-    fileName: source.downloadName,
-  };
-
-  return {
+  const parsed: ParsedApkMetadata = inspectApkMetadata(source.parts, source.totalSize);
+  const info: ApkDigestInfo = {
     available: true,
     fileName: source.downloadName,
     sizeBytes: source.totalSize,
     sha256,
+    packageName: parsed.packageName,
+    versionName: parsed.versionName,
+    versionCode: parsed.versionCode,
+    minAndroidLabel: parsed.minAndroidLabel,
+    fileCount: parsed.fileCount,
+    entries: parsed.entries,
   };
+
+  cachedApkDigest = {
+    cacheKey,
+    info,
+  };
+
+  return info;
 }
 
 // ---------------------------------------------------------------------------
@@ -827,21 +838,31 @@ async function startHttpServer() {
   // Pre-install APK integrity metadata & SHA-256 checksum endpoint
   app.get('/api/apk-info', pageRateLimiter, async (_req, res) => {
     try {
-      let info = await getApkDigestInfo('/Evolve-debug.apk');
+      let info = await getApkDigestInfo('/Evolve.apk');
+      if (!info.available) {
+        info = await getApkDigestInfo('/Evolve-debug.apk');
+      }
       if (!info.available) {
         info = await getApkDigestInfo('/FocusOS-debug.apk');
       }
       if (!info.available) {
-        info = { ...info, fileName: 'Evolve-debug.apk' };
+        info = { ...info, fileName: 'Evolve.apk' };
       }
-      res.setHeader('Cache-Control', 'public, max-age=120');
+      res.setHeader('Cache-Control', 'no-store');
       res.status(200).json(info);
     } catch {
+      res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({
         available: false,
-        fileName: 'Evolve-debug.apk',
+        fileName: 'Evolve.apk',
         sizeBytes: 0,
         sha256: null,
+        packageName: null,
+        versionName: null,
+        versionCode: null,
+        minAndroidLabel: null,
+        fileCount: null,
+        entries: null,
       });
     }
   });
@@ -1518,7 +1539,7 @@ async function startHttpServer() {
         return;
       }
 
-      // Return 404 for missing non-HTML asset/binary paths (important for HEAD /FocusOS-debug.apk check)
+      // Return 404 for missing non-HTML asset/binary paths (important for HEAD /Evolve.apk check)
       const ext = path.extname(req.path);
       if (ext && ext !== '.html') {
         res.status(404).end();

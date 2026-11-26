@@ -14,8 +14,13 @@ const PROTECTED_TOOLS = [
   { app: 'Social & Video Apps', detail: 'Quietly paused until session completes', status: 'BLOCKED' },
 ];
 
-export function FocusShieldShowcase() {
+interface FocusShieldShowcaseProps {
+  versionName?: string | null;
+}
+
+export function FocusShieldShowcase({ versionName }: FocusShieldShowcaseProps) {
   const [shieldActive, setShieldActive] = useState(true);
+  const versionLabel = versionName ? `v${versionName}` : 'v2.5.0';
 
   return (
     <section className="py-12 sm:py-20">
@@ -71,7 +76,7 @@ export function FocusShieldShowcase() {
               href="#download"
               className="site-primary-btn inline-flex min-h-[48px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-sm font-semibold transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-110 sm:w-auto touch-manipulation"
             >
-              <span>Install Evolve v1.0</span>
+              <span>Install Evolve {versionLabel}</span>
               <ArrowDown className="h-4 w-4" aria-hidden="true" />
             </a>
             <span className="text-xs text-[#7c89a1]">

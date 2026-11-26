@@ -26,7 +26,7 @@ const FAQS = [
   {
     question: 'Can I study with friends?',
     answer:
-      'Evolve includes Rooms, where you can create a room or join one using a room code. Room features need a working server connection.',
+      'Yes. Evolve includes Rooms where joining only requires a room join code — no account, login, or server setup needed. Just enter a friend’s join code (or share yours) while online.',
   },
   {
     question: 'Is this the final Play Store release?',

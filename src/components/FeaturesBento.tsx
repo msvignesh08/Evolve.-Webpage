@@ -292,7 +292,7 @@ export function FeaturesBento() {
                   Focus with friends
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-[#9ba8bf]">
-                  Create or join a room with a code and start a shared focus session together.
+                  Create or join a room using only a join code — no accounts, sign-ups, or extra setup required.
                 </p>
               </div>
 
@@ -321,7 +321,7 @@ export function FeaturesBento() {
                   </button>
                 </div>
                 <p className="mt-2 text-[11px] text-[#7c89a1]">
-                  Share a code in Evolve Rooms to study in sync.
+                  Only a join code is required to co-focus in Evolve Rooms.
                 </p>
               </div>
             </div>

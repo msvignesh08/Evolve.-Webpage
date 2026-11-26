@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Check,
@@ -14,12 +14,10 @@ import {
 } from 'lucide-react';
 import { FocusLogo } from './FocusLogo';
 import { ANDROID_PERMISSIONS, NEVER_ACCESSED } from './PermissionsSection';
+import { ApkInfoResponse } from '../utils/apkInfo';
 
-interface ApkInfoResponse {
-  available: boolean;
-  fileName: string;
-  sizeBytes: number;
-  sha256: string | null;
+interface DownloadSectionProps {
+  apkInfo?: ApkInfoResponse | null;
 }
 
 type InspectorTab = 'package' | 'screens' | 'permissions' | 'files';
@@ -30,7 +28,7 @@ const INSTALL_STEPS = [
   {
     step: '01',
     title: 'Download & check SHA-256',
-    body: 'Tap Download APK to save Evolve-debug.apk, then match its SHA-256 checksum against the hash above before installing.',
+    body: 'Tap Download APK to save Evolve.apk, then match its SHA-256 checksum against the hash above before installing.',
   },
   {
     step: '02',
@@ -52,8 +50,8 @@ const APP_SCREENS = [
   },
   {
     module: '02 · Focus Rooms',
-    title: 'Live Co-Focus Sessions',
-    detail: 'Create or join shared study rooms with a 6-digit code to stay accountable together.',
+    title: 'Instant Code-Only Co-Focus',
+    detail: 'Create or join shared study rooms using only a join code — no account or setup required.',
   },
   {
     module: '03 · Study Plan',
@@ -85,38 +83,27 @@ const APK_ENTRIES = [
   { name: 'META-INF/ (14 files)', detail: 'APK v2/v3 signing block, manifest digests & Kotlin metadata', size: '806 KB' },
 ];
 
-export function DownloadSection() {
+export function DownloadSection({ apkInfo = null }: DownloadSectionProps) {
   const [activeTab, setActiveTab] = useState<InspectorTab>('package');
   const [showGuide, setShowGuide] = useState(false);
   const [apkNotice, setApkNotice] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [sharedFeedback, setSharedFeedback] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
-  const [apkInfo, setApkInfo] = useState<ApkInfoResponse | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/apk-info')
-      .then((res) => (res.ok ? (res.json() as Promise<ApkInfoResponse>) : null))
-      .then((data) => {
-        if (active && data) {
-          setApkInfo(data);
-        }
-      })
-      .catch(() => {
-        // Ignore preview fetch errors
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const displaySha256 = apkInfo?.sha256 || PREVIEW_SHA256;
   const formattedSizeMb =
     apkInfo?.sizeBytes && apkInfo.sizeBytes > 0
       ? `${(apkInfo.sizeBytes / (1024 * 1024)).toFixed(2)} MB`
       : '7.19 MB';
-  const displayApkName = apkInfo?.available ? apkInfo.fileName : 'Evolve-debug.apk';
+  const displayApkName = apkInfo?.available ? apkInfo.fileName : 'Evolve.apk';
+  const displayPackageName = apkInfo?.packageName || 'com.vignesh.evolve';
+  const displayVersion = apkInfo?.versionName ? `v${apkInfo.versionName}` : 'v2.5.0';
+  const displayVersionSuffix =
+    apkInfo?.versionCode && apkInfo.versionCode > 0 ? ` (${apkInfo.versionCode})` : '';
+  const displayMinAndroid = apkInfo?.minAndroidLabel || 'Android 8.0+';
+  const displayFileCount = apkInfo?.fileCount ?? 115;
+  const displayEntries = apkInfo?.entries && apkInfo.entries.length > 0 ? apkInfo.entries : APK_ENTRIES;
 
   const handleCopySha256 = async () => {
     try {
@@ -132,8 +119,8 @@ export function DownloadSection() {
     setChecking(true);
     setApkNotice(null);
     const candidates = apkInfo?.available
-      ? [`/${apkInfo.fileName}`, '/Evolve-debug.apk', '/FocusOS-debug.apk']
-      : ['/Evolve-debug.apk', '/FocusOS-debug.apk'];
+      ? [`/${apkInfo.fileName}`, '/Evolve.apk', '/Evolve-debug.apk', '/FocusOS-debug.apk']
+      : ['/Evolve.apk', '/Evolve-debug.apk', '/FocusOS-debug.apk'];
 
     try {
       let resolvedPath: string | null = null;
@@ -161,13 +148,13 @@ export function DownloadSection() {
         setShowGuide(true);
       } else {
         setApkNotice(
-          'Preview mode: place Evolve-debug.apk (or split .part001+ chunks) in the public folder to enable direct HTTPS downloads and live SHA-256 verification.',
+          'Preview mode: place Evolve.apk (or split .part001+ chunks) in the public folder to enable direct HTTPS downloads and live SHA-256 verification.',
         );
         setShowGuide(true);
       }
     } catch {
       setApkNotice(
-        'Preview mode: place Evolve-debug.apk (or split .part001+ chunks) in the public folder to enable direct HTTPS downloads and live SHA-256 verification.',
+        'Preview mode: place Evolve.apk (or split .part001+ chunks) in the public folder to enable direct HTTPS downloads and live SHA-256 verification.',
       );
       setShowGuide(true);
     } finally {
@@ -235,7 +222,7 @@ export function DownloadSection() {
               </button>
 
               <div className="mt-2.5 flex items-center justify-center gap-2 text-xs text-[#91a0ba]">
-                <span>Android 8.0+</span>
+                <span>{displayMinAndroid}</span>
                 <span aria-hidden="true">·</span>
                 <span className="tabular-nums">{formattedSizeMb}</span>
                 <span aria-hidden="true">·</span>
@@ -290,7 +277,8 @@ export function DownloadSection() {
                     {displayApkName}
                   </h3>
                   <p className="mt-0.5 font-mono text-[11px] text-[#8d9cb8] sm:text-xs">
-                    com.vignesh.evolve · v2.5.0 · {formattedSizeMb}
+                    {displayPackageName} · {displayVersion}
+                    {displayVersionSuffix} · {formattedSizeMb}
                   </p>
                 </div>
               </div>
@@ -316,7 +304,7 @@ export function DownloadSection() {
                     label: `Permissions (${ANDROID_PERMISSIONS.length})`,
                     icon: ShieldAlert,
                   },
-                  { id: 'files', label: 'APK Files (115)', icon: FileArchive },
+                  { id: 'files', label: `APK Files (${displayFileCount})`, icon: FileArchive },
                 ] as const
               ).map((tab) => {
                 const selected = activeTab === tab.id;
@@ -501,7 +489,7 @@ export function DownloadSection() {
 
               {activeTab === 'files' && (
                 <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] px-4">
-                  {APK_ENTRIES.map((entry) => (
+                  {displayEntries.map((entry) => (
                     <div
                       key={entry.name}
                       className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"

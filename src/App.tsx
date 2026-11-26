@@ -37,6 +37,7 @@ import {
   getSiteThemeMeta,
   isValidSiteThemeId,
 } from './utils/siteThemes';
+import { ApkInfoResponse } from './utils/apkInfo';
 
 export default function App() {
   // Website Theme ('signature' | 'dark' | 'phantom' | 'emerald')
@@ -65,6 +66,7 @@ export default function App() {
   const [cookieConsent, setCookieConsent] = useState<CookiePreferences | null>(null);
   const [cookieModalOpen, setCookieModalOpen] = useState(false);
   const [prefsHydrated, setPrefsHydrated] = useState(false);
+  const [apkInfo, setApkInfo] = useState<ApkInfoResponse | null>(null);
 
   const showCookieBanner =
     !hasPriorConsent && cookieConsent === null && !isFullScreenDemo && !isAdminView;
@@ -96,6 +98,39 @@ export default function App() {
     })();
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Automatically fetch live APK SHA-256, version, package ID, and entries (refreshes on tab focus)
+  useEffect(() => {
+    let active = true;
+
+    const loadApkInfo = async () => {
+      try {
+        const res = await fetch('/api/apk-info', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as ApkInfoResponse;
+        if (active && data) {
+          setApkInfo(data);
+        }
+      } catch {
+        // Ignore preview fetch errors
+      }
+    };
+
+    void loadApkInfo();
+    const onFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void loadApkInfo();
+      }
+    };
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+
+    return () => {
+      active = false;
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
     };
   }, []);
 
@@ -363,10 +398,10 @@ export default function App() {
           />
           <HowItWorks />
           <ProgressSection />
-          <FocusShieldShowcase />
+          <FocusShieldShowcase versionName={apkInfo?.versionName} />
           <PermissionsSection />
-          <DownloadSection />
-          <UpcomingReleaseSection />
+          <DownloadSection apkInfo={apkInfo} />
+          <UpcomingReleaseSection versionName={apkInfo?.versionName} />
           <FaqSection />
         </main>
         <Footer
